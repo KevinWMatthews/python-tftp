@@ -1,2 +1,4 @@
 def get_receive_format_string(filename):
-    return ''
+    if not filename:
+        return ''
+    return '!H1sB5sB'
