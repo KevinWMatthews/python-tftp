@@ -1,2 +1,11 @@
 # Ignore python virtual environment
-venv/
+/venv/
+
+# Ignore pytest cache
+/.cache/
+
+# Ignore python setuptools packaging
+/*.egg-info/
+
+# Ignore compiled python files
+*.pyc
