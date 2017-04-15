@@ -1,4 +1,11 @@
 import struct
 
 def create_packet(filename):
-    return struct.pack("!HcB5sB", 1, filename, 0, 'octet', 0)
+    format_string = '!'             # Network (big endian)
+    format_string += 'H'            # opcode - two-byte unsigned short
+    format_string += str(len(filename))
+    format_string += 's'            # filename - string
+    format_string += 'B'            # null byte - one-byte unsigned char
+    format_string += '5s'           # mode - 'octet'
+    format_string += 'B'            # null byte - one-byte unsigned char
+    return struct.pack(format_string, 1, filename, 0, 'octet', 0)
