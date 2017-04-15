@@ -9,3 +9,6 @@
 
 # Ignore compiled python files
 *.pyc
+
+# Ignore Sublime Text files
+*.sublime-workspace

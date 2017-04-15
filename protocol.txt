@@ -1,0 +1,34 @@
+protocol.txt
+
+5. TFTP Packets
+
+   TFTP supports five types of packets, all of which have been mentioned
+   above:
+
+          opcode  operation
+            1     Read request (RRQ)
+            2     Write request (WRQ)
+            3     Data (DATA)
+            4     Acknowledgment (ACK)
+            5     Error (ERROR)
+
+
+            2 bytes     string    1 byte     string   1 byte
+            ------------------------------------------------
+           | Opcode |  Filename  |   0  |    Mode    |   0  |
+            ------------------------------------------------
+
+                       Figure 5-1: RRQ/WRQ packet
+
+The mode field contains the
+   string "netascii", "octet", or "mail" (or any combination of upper
+   and lower case, such as "NETASCII", NetAscii", etc.) in netascii
+   indicating the three modes defined in the protocol.
+
+Octet mode is used to transfer a file that is in the 8-bit
+   format of the machine from which the file is being transferred.  It
+   is assumed that each type of machine has a single 8-bit format that
+   is more common, and that that format is chosen.  For example, on a
+   DEC-20, a 36 bit machine, this is four 8-bit bytes to a word with
+   four bits of breakage.  If a host receives a octet file and then
+   returns it, the returned file must be identical to the original.
