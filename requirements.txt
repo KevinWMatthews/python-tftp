@@ -4,3 +4,4 @@ py==1.4.33
 pyparsing==2.2.0
 pytest==3.0.7
 six==1.10.0
+-e git+git@github.com:KevinWMatthews/python-tftp.git@dbcd8668851428683f78245d4148176e37b8647c#egg=tftp
