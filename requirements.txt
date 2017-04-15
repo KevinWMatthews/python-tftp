@@ -1,7 +1,11 @@
 appdirs==1.4.3
+funcsigs==1.0.2
+mock==2.0.0
 packaging==16.8
+pbr==2.1.0
 py==1.4.33
 pyparsing==2.2.0
 pytest==3.0.7
+pytest-mock==1.6.0
 six==1.10.0
--e git+git@github.com:KevinWMatthews/python-tftp.git@dbcd8668851428683f78245d4148176e37b8647c#egg=tftp
+-e git+git@github.com:KevinWMatthews/python-tftp.git@c9cd3756850ccd97c37e8a8f10b705c619d46ab1#egg=tftp
