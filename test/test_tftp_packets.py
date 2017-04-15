@@ -25,7 +25,6 @@ def test_create_receive_packet():
 
     assert tftp.create_packet(filename) == packet_string
 
-@pytest.mark.skip(reason="Must refactor create_packet() before this can pass")
 def test_create_receive_packet_with_different_filename():
     filename = 'b'
 
@@ -38,10 +37,10 @@ def test_create_receive_packet_with_different_filename():
     Null        00
     """
 
-    packet_string = OPCODE_READ.encode('hex')
-    packet_string += filename.encode('hex')
-    packet_string += '\x00'.encode('hex')
-    packet_string += 'octet'.encode('hex')
-    packet_string += '\x00'.encode('hex')
+    packet_string = OPCODE_READ
+    packet_string += filename
+    packet_string += NULL_BYTE
+    packet_string += 'octet'
+    packet_string += NULL_BYTE
 
     assert tftp.create_packet(filename) == packet_string
