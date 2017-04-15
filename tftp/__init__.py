@@ -1,1 +1,1 @@
-from .tftp import create_receive_packet
+from .tftp import create_packet
