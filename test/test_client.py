@@ -2,6 +2,7 @@ import pytest
 import mock
 from mock import MagicMock, patch
 import tftp
+import socket
 
 def test_1(mocker):
     thing = tftp.ProductionClass()
@@ -70,3 +71,10 @@ def test_8(mock_pc, mock_method):
     #  t = tftp.ProductionClass()
     #  t.method()
     #  mock_method.assert_called()
+
+# This fails: '_socketobject' object attribute 'sendto' is read-only
+# I wonder if it's true that sendto is implemented in C so it can't be mocked.
+#  @patch.object(socket.socket, 'sendto')
+#  def test_sendto(mock_sendto):
+    #  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #  assert mock_sendto.called
