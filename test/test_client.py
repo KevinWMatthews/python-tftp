@@ -78,3 +78,9 @@ def test_8(mock_pc, mock_method):
 #  def test_sendto(mock_sendto):
     #  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #  assert mock_sendto.called
+
+def test_pass_mock():
+    m = mock.Mock()
+    pc = tftp.PC(m)
+    pc.call_socket()
+    assert m.called
