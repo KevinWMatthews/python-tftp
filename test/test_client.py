@@ -16,6 +16,8 @@ class TestClient:
         assert Client(mock_socket)
 
     def test_send_read_request(self, mock_socket):
+        server_ip = '127.0.0.1'
+        server_port = 69
         filename = 'a'
 
         packet_string = OPCODE_READ
@@ -26,9 +28,12 @@ class TestClient:
 
         client = Client(mock_socket)
 
-        assert packet_string == client.read(filename)
+        client.read(filename, server_ip, server_port)
+        mock_socket.sendto.assert_called_with(packet_string, (server_ip, server_port))
 
-    def test_read_request_with_different_filename(self, mock_socket):
+    def test_read_a_different_filename(self, mock_socket):
+        server_ip = '127.0.0.1'
+        server_port = 69
         filename = 'b'
 
         packet_string = OPCODE_READ
@@ -39,9 +44,12 @@ class TestClient:
 
         client = Client(mock_socket)
 
-        assert packet_string == client.read(filename)
+        client.read(filename, server_ip, server_port)
+        mock_socket.sendto.assert_called_with(packet_string, (server_ip, server_port))
 
-    def test_create_receive_packet_with_longer_filename(self, mock_socket):
+    def test_read_a_longer_filename(self, mock_socket):
+        server_ip = '127.0.0.1'
+        server_port = 69
         filename = 'test.txt'
 
         packet_string = OPCODE_READ
@@ -52,4 +60,13 @@ class TestClient:
 
         client = Client(mock_socket)
 
-        assert packet_string == client.read(filename)
+        client.read(filename, server_ip, server_port)
+        mock_socket.sendto.assert_called_with(packet_string, (server_ip, server_port))
+
+    @pytest.mark.skip('todo')
+    def test_read_from_different_server_ip_address(self, mock_socket):
+        pass
+
+    @pytest.mark.skip('todo')
+    def test_read_from_different_server_port(self, mock_socket):
+        pass
