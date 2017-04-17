@@ -45,3 +45,9 @@ def test_5(mock_pc, mock_pc_method):
 def test_6(mock_method):
     tftp.ProductionClass.method()
     mock_method.assert_called()
+
+@patch.object(tftp.ProductionClass, 'method')
+def test_7(mock_method):
+    t = tftp.ProductionClass()
+    t.method()
+    mock_method.assert_called()
