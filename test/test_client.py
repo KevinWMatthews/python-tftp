@@ -20,3 +20,13 @@ def test_3(mock_pc_method):
     tftp.ProductionClass.method()
     assert mock_pc_method is tftp.ProductionClass.method
     assert mock_pc_method.called
+
+@patch('tftp.ProductionClass.method')
+@patch('tftp.ProductionClass')
+def test_4(mock_pc, mock_pc_method):
+    assert mock_pc is tftp.ProductionClass
+    assert mock_pc_method is tftp.ProductionClass.method
+    tftp.ProductionClass()
+    tftp.ProductionClass.method()
+    assert mock_pc.called
+    assert mock_pc_method.called
