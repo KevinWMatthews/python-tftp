@@ -1,0 +1,2 @@
+I have issue mocking socket.socket.sendto(). If I use @patch.object(socket.socket, 'sendto'), it raises an AttributeError exception saying that sendto is read-only. I think that sendto is implemented in C and that this causes issue.
+So, instead of just mocking a hidden interal attribute, I'll take the object-oriented approach and pass a socket object into the Client.

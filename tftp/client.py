@@ -1,2 +1,3 @@
 class Client:
-    pass
+    def __init__(self, socket):
+        pass
