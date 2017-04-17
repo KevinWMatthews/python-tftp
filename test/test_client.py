@@ -13,7 +13,37 @@ class TestClient:
     def test_send_read_request(self):
         mock_socket = mock.Mock()
 
-        filename = 'filename.ext'
+        filename = 'a'
+
+        packet_string = OPCODE_READ
+        packet_string += filename
+        packet_string += NULL_BYTE
+        packet_string += 'octet'
+        packet_string += NULL_BYTE
+
+        client = Client(mock_socket)
+
+        assert packet_string == client.read(filename)
+
+    def test_read_request_with_different_filename(self):
+        mock_socket = mock.Mock()
+
+        filename = 'b'
+
+        packet_string = OPCODE_READ
+        packet_string += filename
+        packet_string += NULL_BYTE
+        packet_string += 'octet'
+        packet_string += NULL_BYTE
+
+        client = Client(mock_socket)
+
+        assert packet_string == client.read(filename)
+
+    def test_create_receive_packet_with_longer_filename(self):
+        mock_socket = mock.Mock()
+
+        filename = 'test.txt'
 
         packet_string = OPCODE_READ
         packet_string += filename
