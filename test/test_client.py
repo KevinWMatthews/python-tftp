@@ -51,3 +51,22 @@ def test_7(mock_method):
     t = tftp.ProductionClass()
     t.method()
     mock_method.assert_called()
+
+@patch.object(tftp.ProductionClass, 'method')
+@patch('tftp.ProductionClass')
+def test_8(mock_pc, mock_method):
+    assert mock_pc is tftp.ProductionClass
+    tftp.ProductionClass()
+    assert mock_pc.called
+
+    # This fails
+    #  assert mock_method is tftp.ProductionClass.method
+
+    # This fails
+    #  tftp.ProductionClass.method()
+    #  mock_method.assert_called()
+
+    # And this fails
+    #  t = tftp.ProductionClass()
+    #  t.method()
+    #  mock_method.assert_called()
