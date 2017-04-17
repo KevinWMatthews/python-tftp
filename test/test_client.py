@@ -4,21 +4,23 @@ import mock
 NULL_BYTE = '\x00'
 OPCODE_READ = '\x00\x01'
 
-def test_client_can_be_created():
-    mock_socket = mock.Mock()
-    assert Client(mock_socket)
+class TestClient:
 
-def test_send_read_request():
-    mock_socket = mock.Mock()
+    def test_client_can_be_created(self):
+        mock_socket = mock.Mock()
+        assert Client(mock_socket)
 
-    filename = 'filename.ext'
+    def test_send_read_request(self):
+        mock_socket = mock.Mock()
 
-    packet_string = OPCODE_READ
-    packet_string += filename
-    packet_string += NULL_BYTE
-    packet_string += 'octet'
-    packet_string += NULL_BYTE
+        filename = 'filename.ext'
 
-    client = Client(mock_socket)
+        packet_string = OPCODE_READ
+        packet_string += filename
+        packet_string += NULL_BYTE
+        packet_string += 'octet'
+        packet_string += NULL_BYTE
 
-    assert packet_string == client.read(filename)
+        client = Client(mock_socket)
+
+        assert packet_string == client.read(filename)
