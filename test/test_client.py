@@ -84,3 +84,9 @@ def test_pass_mock():
     pc = tftp.PC(m)
     pc.call_socket()
     assert m.called
+
+def test_send_to_socket():
+    mock_socket = mock.Mock()
+    tftp_client = tftp.Client2(mock_socket)
+    tftp_client.send_to_socket()
+    mock_socket.sendto.assert_called()

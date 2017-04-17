@@ -20,3 +20,10 @@ class Client:
 
     def get(self):
         pass
+
+class Client2:
+    def __init__(self, socket):
+        self.socket = socket
+
+    def send_to_socket(self):
+        self.socket.sendto()
