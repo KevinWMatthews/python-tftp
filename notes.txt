@@ -1,2 +1,16 @@
 I have issue mocking socket.socket.sendto(). If I use @patch.object(socket.socket, 'sendto'), it raises an AttributeError exception saying that sendto is read-only. I think that sendto is implemented in C and that this causes issue.
 So, instead of just mocking a hidden interal attribute, I'll take the object-oriented approach and pass a socket object into the Client.
+
+The server can resend a single packet if it does not receive an ack in response.
+TFTP is designed to be implemented on top of the Datagram protocol (UDP).
+
+Client          Server
+______________________
+Read    -->
+        <--     Data 1 (< 512 K)
+Ack     -->
+        <--     Data 2
+Ack     -->
+
+Looks like port 69 is used to initiate a transmission but the data exchange takes place on a different port.
+This is called the 'tid': Transmission ID. It simply consists of the port that is used for data transfer.
