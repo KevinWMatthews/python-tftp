@@ -166,5 +166,5 @@ class TestClient:
         read_request += NULL_BYTE
 
         client = Client(mock_socket)
-        with pytest.raises(timeout):
-            client.read(filename, server_ip, server_port)
+        #TODO do we want to try to verify the console output? Probably not.
+        assert False == client.read(filename, server_ip, server_port)
