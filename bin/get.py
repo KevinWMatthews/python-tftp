@@ -6,6 +6,7 @@ import socket
 server_ip = '127.0.0.1'
 server_port = 69
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+client_socket.settimeout(2)     # Is the timeout determined by the RFC spec?
 #TODO do we need to set the socket timeout? If so, whose responsibility is this?
 client = Client(client_socket)
 client.read('tst.txt', server_ip, server_port)

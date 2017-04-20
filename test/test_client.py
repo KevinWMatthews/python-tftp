@@ -1,6 +1,7 @@
 from tftp import Client
 import pytest
 import mock
+from socket import timeout
 
 NULL_BYTE = '\x00'
 OPCODE_READ = '\x00\x01'
@@ -147,3 +148,23 @@ class TestClient:
                         ]
         assert expected_args == mock_socket.sendto.call_args_list
         assert 2 == mock_socket.sendto.call_count
+
+    def test_server_does_not_respond(self, mock_socket):
+        #TODO use socket.timeout
+        # The docs say to use Exception(RuntimeError), but
+        # I can't figure out how to test that.
+        mock_socket.recvfrom.side_effect = timeout
+
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+
+        read_request = OPCODE_READ
+        read_request += filename
+        read_request += NULL_BYTE
+        read_request += 'octet'
+        read_request += NULL_BYTE
+
+        client = Client(mock_socket)
+        with pytest.raises(timeout):
+            client.read(filename, server_ip, server_port)
