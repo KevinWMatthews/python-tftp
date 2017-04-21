@@ -9,17 +9,136 @@ OPCODE_DATA = '\x00\x03'
 OPCODE_ACK  = '\x00\x04'
 
 '''
-Test list:
-    Read request sendto() must handle failure.
+TFTP protocol for reading N blocks:
+    Client              Server
+    __________________________
+    Read        -->
 
-    Server response to read packet:
-        invalid
-            no response
-            wrong block number
-            ?
-        valid
-            short data (end transmission)
+                <--     Data block 1 (== 512 K)
+    Ack block 1 -->
+
+                <--     Data block 2 (== 512 K)
+    Ack block 2 -->
+
+                ...
+
+                <--     Data block n (== 512 K)
+    Ack block n -->
+
+                <--     Data N (< 512 K)
+    Ack block N -->
+
+Test list:
+    Read request failure.
+        --> Failure
+
+    Server response failure, block 1.
+        --> Read
+        <-- Failure:
+                no response
+                wrong block number
+
+    Ack failure, block 1.
+        --> Read
+        <-- Data block 1
+        --> Failure
+                ?
+
+    Valid transmission, 1 block:
+        --> Read
+        <-- Data block 1
+        --> Ack block 1
+
+    Server response failure, block n.
+        --> Read
+        <-- Data block 1
+        --> Ack block 1
+        <-- Failure
+                no response
+                wrong block number
+                ?
+
+    Ack failure, block n.
+        --> Read
+        <-- Data block 1
+        --> Ack block 1
+        <-- Data block n
+        --> Failure
+                ?
+
+    Server response failure, block N.
+        --> Read
+        <-- Data block 1
+        --> Ack block 1
+        <-- Data block n
+        --> Ack block n
+        <-- Failure
+                no response
+                wrong block number
+
+    Ack failure, block N.
+        --> Read
+        <-- Data block 1
+        --> Ack block 1
+        <-- Data block n
+        --> Ack block n
+        <-- Data block N
+        --> Failure
+                ?
+
+    Valid transmission, N blocks.
+        --> Read
+        <-- Data block 1
+        --> Ack block 1
+        <-- Data block n
+        --> Ack block n
+        <-- Data block N
+        --> Ack block N
+
+    Different filenames.
+        input sanitization
+    Different server IP.
+        input sanitization
+    Different server port.
+        69 by default?
+        Other ports?
+    Different Transmission ID:
+        1
+        65535
+        65536   fail
+        Are there any theoreticall invalid ports?
+    Different data packets:
+        minimum
+        512 K
+        513 K
+    Different number of blocks:
+        1
+        2
+        65535   (original TFTP size limit was 512K * 65535 = 32 M)
+        65536?  this works with some tftp server implementations; the block number just rolls over.
+
+TODO
+    Do we want to convert read()'s ip and port arguments into a tuple? I think so.
 '''
+
+def create_read_request(filename):
+    read_request = OPCODE_READ
+    read_request += filename
+    read_request += NULL_BYTE
+    read_request += 'octet'
+    read_request += NULL_BYTE
+    return read_request
+
+def create_data_packet(block_number, data):
+    data_packet = OPCODE_DATA
+    data_packet += block_number
+    data_packet += data
+    return data_packet
+
+def create_ack_packet(block_number):
+    ack_packet = OPCODE_ACK
+    ack_packet += block_number
+    return ack_packet
 
 class TestClient:
 
@@ -31,64 +150,18 @@ class TestClient:
     def test_client_can_be_created(self, mock_socket):
         assert Client(mock_socket)
 
-    @pytest.mark.skip('Need to handle server response')
-    def test_send_read_request(self, mock_socket):
-        server_ip = '127.0.0.1'
-        server_port = 69
-        filename = 'a'
-
-        packet_string = OPCODE_READ
-        packet_string += filename
-        packet_string += NULL_BYTE
-        packet_string += 'octet'
-        packet_string += NULL_BYTE
-
-        client = Client(mock_socket)
-
-        client.read(filename, server_ip, server_port)
-        mock_socket.sendto.assert_called_with(packet_string, (server_ip, server_port))
-
-    @pytest.mark.skip('Need to handle server response')
-    def test_read_a_different_filename(self, mock_socket):
-        server_ip = '127.0.0.1'
-        server_port = 69
-        filename = 'b'
-
-        packet_string = OPCODE_READ
-        packet_string += filename
-        packet_string += NULL_BYTE
-        packet_string += 'octet'
-        packet_string += NULL_BYTE
-
-        client = Client(mock_socket)
-
-        client.read(filename, server_ip, server_port)
-        mock_socket.sendto.assert_called_with(packet_string, (server_ip, server_port))
-
-    @pytest.mark.skip('Need to handle server response')
-    def test_read_a_longer_filename(self, mock_socket):
+    def test_server_does_not_respond(self, mock_socket):
+        mock_socket.recvfrom.side_effect = timeout  # The docs say to use Exception(RuntimeError), but I can't figure out how to test that.
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
 
-        packet_string = OPCODE_READ
-        packet_string += filename
-        packet_string += NULL_BYTE
-        packet_string += 'octet'
-        packet_string += NULL_BYTE
+        read_request = create_read_request(filename)
 
         client = Client(mock_socket)
-
-        client.read(filename, server_ip, server_port)
-        mock_socket.sendto.assert_called_with(packet_string, (server_ip, server_port))
-
-    @pytest.mark.skip('todo')
-    def test_read_from_different_server_ip_address(self, mock_socket):
-        pass
-
-    @pytest.mark.skip('todo')
-    def test_read_from_different_server_port(self, mock_socket):
-        pass
+        #TODO do we want to try to verify the console output? Probably not.
+        # Do we want to return an error message? Not sure yet, and this is simpler.
+        assert False == client.read(filename, server_ip, server_port)
 
     '''
     Client          Server
@@ -102,69 +175,45 @@ class TestClient:
         server_port = 69
         filename = 'test.txt'
 
-        read_request = OPCODE_READ
-        read_request += filename
-        read_request += NULL_BYTE
-        read_request += 'octet'
-        read_request += NULL_BYTE
+        # Client read request
+        read_request = create_read_request(filename)
 
+        # Server response - data packet
         block_number = '\x00\x01'       # block number 1
         data = 'B\x0a'                  # data in our file: 'B' and LF
-        server_packet = OPCODE_DATA
-        server_packet += block_number
-        server_packet += data
-
-        ack_packet = OPCODE_ACK
-        ack_packet += block_number
+        data_packet = create_data_packet(block_number, data)
 
         tid = 12345                     # transmission id (port) is random?
-        server_response = (server_packet, (server_ip, tid))
+        server_response = (data_packet, (server_ip, tid))
         mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
+        # Client ack
+        ack_packet = create_ack_packet(block_number)
+
+        # Mock expectations
+        read_request_args = read_request, (server_ip, server_port)
+        ack_packet_args = ack_packet, (server_ip, tid)
+        expected_args = [
+                        # A list of: (<ordered arguments>, <empty_dictionary>)
+                        (read_request_args,),
+                        (ack_packet_args,)
+                        ]
+
+        # Actual call
         client = Client(mock_socket)
         client.read(filename, server_ip, server_port)
-        # This works.
-        #  calls = [
-        #          mock.call(read_request, (server_ip, server_port)),
-        #          mock.call(ack_packet, (server_ip, server_port))
-        #          ]
-        #  mock_socket.sendto.assert_has_calls(calls)
 
-        # This also works:
-        #  expected_args = [
-        #                  mock.call( read_request, (server_ip, server_port) ),
-        #                  mock.call( ack_packet,   (server_ip, server_port) )
-        #                  ]
-
-        # This is the recommended way.
-        # Notice the insane commas:
-        # (( ),) ,
-        # (( ),) ,
-        # (( ),)
-        # This causes the tuples to be interpreted as calls?
-        expected_args = [
-                        (( read_request, (server_ip, server_port) ),),
-                        (( ack_packet,   (server_ip, tid) ),)
-                        ]
         assert expected_args == mock_socket.sendto.call_args_list
         assert 2 == mock_socket.sendto.call_count
 
-    def test_server_does_not_respond(self, mock_socket):
-        #TODO use socket.timeout
-        # The docs say to use Exception(RuntimeError), but
-        # I can't figure out how to test that.
-        mock_socket.recvfrom.side_effect = timeout
+    @pytest.mark.skip('todo')
+    def test_read_a_different_filename(self, mock_socket):
+        pass
 
-        server_ip = '127.0.0.1'
-        server_port = 69
-        filename = 'test.txt'
+    @pytest.mark.skip('todo')
+    def test_read_from_different_server_ip_address(self, mock_socket):
+        pass
 
-        read_request = OPCODE_READ
-        read_request += filename
-        read_request += NULL_BYTE
-        read_request += 'octet'
-        read_request += NULL_BYTE
-
-        client = Client(mock_socket)
-        #TODO do we want to try to verify the console output? Probably not.
-        assert False == client.read(filename, server_ip, server_port)
+    @pytest.mark.skip('todo')
+    def test_read_from_different_server_port(self, mock_socket):
+        pass

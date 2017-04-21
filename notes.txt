@@ -14,3 +14,41 @@ Ack     -->
 
 Looks like port 69 is used to initiate a transmission but the data exchange takes place on a different port.
 This is called the 'tid': Transmission ID. It simply consists of the port that is used for data transfer.
+
+
+Notes for mocking:
+'''
+mock.call_args() returns:
+    None
+or
+    A tuple that contains any ordered arguments (or an empty tuple)
+    and
+    any keyword arguments (or an empty dictionary).
+This is for the last call to the mock only.
+
+mock.call_args_list() returns a list (ordered?) of the arguments of all calls to the mock.
+'''
+
+# This works.
+#  calls = [
+#          mock.call(read_request, (server_ip, server_port)),
+#          mock.call(ack_packet, (server_ip, server_port))
+#          ]
+#  mock_socket.sendto.assert_has_calls(calls)
+
+# This also works:
+#  expected_args = [
+#                  mock.call( read_request, (server_ip, server_port) ),
+#                  mock.call( ack_packet,   (server_ip, server_port) )
+#                  ]
+
+# This is the recommended way.
+# Notice the insane commas:
+# (( ),) ,
+# (( ),) ,
+# (( ),)
+# This causes the tuples to be interpreted as calls?
+expected_args = [
+                (( read_request, (server_ip, server_port) ),),
+                (( ack_packet,   (server_ip, tid) ),)
+                ]
