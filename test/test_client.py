@@ -130,11 +130,17 @@ TODO
 #   (<ordered_arguments>, <keywork_arguments>)
 sendto_args = []
 
+from mock import call
 def expect_read_request(filename, server_ip, server_port):
     read_request = create_read_request(filename)
     read_request_args = read_request, (server_ip, server_port)
     # We have no keyword arguments
-    sendto_args.append( (read_request_args,) )
+    sendto_args.extend( call(1,1) )
+
+def expect_ack(block_number, server_ip, tid):
+    ack_packet = create_ack_packet(block_number)
+    ack_packet_args = ack_packet, (server_ip, tid)
+    sendto_args.append( (ack_packet_args,) )
 
 def create_read_request(filename):
     read_request = OPCODE_READ
@@ -241,6 +247,7 @@ class TestClient:
 
         # Client read request
         read_request = create_read_request(filename)
+        sendto_args = []
 
         # Server response - data packet
         block_number = '\x00\x01'       # block number 1
@@ -254,6 +261,8 @@ class TestClient:
         # Mock expectations
         read_request_args = read_request, (server_ip, server_port)
         ack_packet_args = ack_packet, (server_ip, tid)
+        expect_read_request(filename, server_ip, server_port)
+        expect_ack(block_number, server_ip, tid)
         expected_args = [
                         # A list of: (<ordered arguments>, <empty_dictionary>)
                         (read_request_args,),
