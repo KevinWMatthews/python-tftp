@@ -231,7 +231,7 @@ class TestClient:
                         (read_request_args,),
                         ]
         # Set server response
-        mock_socket.recvfrom = mock.Mock(return_value = server_response)
+        mock_socket.recvfrom.side_effect = [server_response]
 
         ### Test
         client = Client(mock_socket)
@@ -287,7 +287,7 @@ class TestClient:
                 <--     Data block 1 (== 512 K)
     Ack block 1 -->
     '''
-    def test_parse_first_read_response(self, mock_socket):
+    def test_transfer_a_single_block_successfully(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -313,7 +313,7 @@ class TestClient:
                         (ack_packet_args,)
                         ]
         # Set server response
-        mock_socket.recvfrom = mock.Mock(return_value = server_response)
+        mock_socket.recvfrom.side_effect = [server_response]
 
         ### Test
         client = Client(mock_socket)
