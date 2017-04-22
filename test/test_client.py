@@ -134,13 +134,13 @@ TODO
 '''
 
 # Create various TFTP packets
-def create_read_request(filename):
+def create_read_packet(filename):
     return create_packet(OPCODE_READ, filename, OPCODE_NULL, 'octet', OPCODE_NULL)
 
-def create_ack_response(block_number):
+def create_ack_packet(block_number):
     return create_packet(OPCODE_ACK, block_number)
     
-def create_data_packet(block_number, data):
+def create_data_response(block_number, data):
     return create_packet(OPCODE_DATA, block_number, data)
 
 # Create a general packet from the fields given.
@@ -191,7 +191,7 @@ class TestClient:
 
         ### Set expectations
         # Client read request
-        packet = create_read_request(filename)
+        packet = create_read_packet(filename)
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Set client expectations
@@ -222,13 +222,13 @@ class TestClient:
 
         ### Set expectations
         # Client read request
-        packet = create_read_request(filename)
+        packet = create_read_packet(filename)
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Server response
         block_number = '\x00\x02'       # Should be block number 1 but isn't
         data = 'B\x0a'                  # data in our file: 'B' and LF
-        packet = create_data_packet(block_number, data)
+        packet = create_data_response(block_number, data)
         server_response = create_socket_tuple(packet, server_ip, tid)
 
         # Set client expectations
@@ -262,7 +262,7 @@ class TestClient:
 
         ### Set expectations
         # Client read request
-        packet = create_read_request(filename)
+        packet = create_read_packet(filename)
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Server response
@@ -305,17 +305,17 @@ class TestClient:
 
         ### Set expectations
         # Client read request
-        packet = create_read_request(filename)
+        packet = create_read_packet(filename)
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Server response - data packet
         block_number = '\x00\x01'       # block number 1
         data = 'B\x0a'                  # data in our file: 'B' and LF
-        packet = create_data_packet(block_number, data)
+        packet = create_data_response(block_number, data)
         server_response = create_socket_tuple(packet, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_response(block_number)
+        packet = create_ack_packet(block_number)
         ack_packet_args = create_socket_tuple(packet, server_ip, tid)
 
         # Set client expectations
@@ -354,17 +354,17 @@ class TestClient:
 
         ### Set expectations
         # Client read request
-        packet = create_read_request(filename)
+        packet = create_read_packet(filename)
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Server response - data packet
         block_number = '\x00\x01'       # block number 1
         data = ''.join(choice(printable) for i in range(512))
-        packet = create_data_packet(block_number, data)
+        packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_response(block_number)
+        packet = create_ack_packet(block_number)
         ack_packet_args = create_socket_tuple(packet, server_ip, tid)
 
         # Server response - socket.timeout
@@ -406,23 +406,23 @@ class TestClient:
 
         ### Set expectations
         # Client read request
-        packet = create_read_request(filename)
+        packet = create_read_packet(filename)
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Server response - data packet
         block_number = '\x00\x01'       # block number 1
         data = ''.join(choice(printable) for i in range(512))
-        packet = create_data_packet(block_number, data)
+        packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_response(block_number)
+        packet = create_ack_packet(block_number)
         ack_packet_args = create_socket_tuple(packet, server_ip, tid)
 
         # Server response - wrong block number
         block_number = '\x00\x03'       # Should be block number 2 but isn't
         data = 'B\x0a'                  # data in our file: 'B' and LF
-        packet = create_data_packet(block_number, data)
+        packet = create_data_response(block_number, data)
         server_response_2 = create_socket_tuple(packet, server_ip, tid)
 
         # Set client expectations
@@ -460,17 +460,17 @@ class TestClient:
 
         ### Set expectations
         # Client read request
-        packet = create_read_request(filename)
+        packet = create_read_packet(filename)
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Server response - data packet
         block_number = '\x00\x01'       # block number 1
         data = ''.join(choice(printable) for i in range(512))
-        packet = create_data_packet(block_number, data)
+        packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_response(block_number)
+        packet = create_ack_packet(block_number)
         ack_packet_args = create_socket_tuple(packet, server_ip, tid)
 
         # Server response - wrong block number
