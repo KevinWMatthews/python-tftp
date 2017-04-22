@@ -187,8 +187,11 @@ class TestClient:
         filename = 'test.txt'
 
         ### Set expectations
-        mock_socket.recvfrom.side_effect = timeout  # socket.timeout
+        # Client read request
         read_request = create_read_request(filename)
+
+        # Server response - socket.timeout
+        mock_socket.recvfrom.side_effect = timeout
 
         ### Test
         client = Client(mock_socket)
@@ -208,21 +211,26 @@ class TestClient:
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
+        # Client read request
+        read_request_args = create_read_request_args(filename, server_ip, server_port)
 
+        # Server response
         block_number = '\x00\x02'       # Should be block number 1 but isn't
         data = 'B\x0a'                  # data in our file: 'B' and LF
         server_response = create_server_response(block_number, data, server_ip, tid)
-        mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
-        read_request_args = create_read_request_args(filename, server_ip, server_port)
+        # I only know how to set all expectations at once.
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
                         (read_request_args,),
                         ]
+        mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
-        # Actual call
+        ### Test
         client = Client(mock_socket)
         assert False == client.read(filename, server_ip, server_port)
+
+        ### Check expectations
         assert expected_args == mock_socket.sendto.call_args_list
         assert 1 == mock_socket.sendto.call_count
 
@@ -234,6 +242,7 @@ class TestClient:
     Ack block 1 -->
     '''
     def test_parse_first_read_response(self, mock_socket):
+        ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
@@ -247,18 +256,19 @@ class TestClient:
         block_number = '\x00\x01'       # block number 1
         data = 'B\x0a'                  # data in our file: 'B' and LF
         server_response = create_server_response(block_number, data, server_ip, tid)
-        mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
         # Cliet ack response
         ack_packet_args = create_ack_packet_args(block_number, server_ip, tid)
 
+        # I only know how to set all expectations at once.
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
                         (read_request_args,),
                         (ack_packet_args,)
                         ]
+        mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
-        ### Actual call
+        ### Test
         client = Client(mock_socket)
         assert True == client.read(filename, server_ip, server_port)
 
