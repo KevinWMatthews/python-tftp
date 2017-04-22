@@ -2,6 +2,8 @@ from tftp import Client
 import pytest
 import mock
 from socket import timeout
+from random import choice
+from string import printable
 
 NULL_BYTE = '\x00'
 OPCODE_READ = '\x00\x01'
@@ -310,7 +312,7 @@ class TestClient:
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
                         (read_request_args,),
-                        (ack_packet_args,)
+                        (ack_packet_args,),
                         ]
         # Set server response
         mock_socket.recvfrom.side_effect = [server_response]
@@ -318,6 +320,56 @@ class TestClient:
         ### Test
         client = Client(mock_socket)
         assert True == client.read(filename, server_ip, server_port)
+
+        ### Check expectations
+        assert expected_args == mock_socket.sendto.call_args_list
+        assert 2 == mock_socket.sendto.call_count
+
+
+    '''
+    Client              Server
+    __________________________
+    Read        -->
+
+                <--     Data block 1 (== 512 K)
+    Ack block 1 -->
+
+                <--     Failure - timeout
+    '''
+    def test_server_does_not_send_next_block(self, mock_socket):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        read_request_args = create_read_request_args(filename, server_ip, server_port)
+
+        # Server response - data packet
+        block_number = '\x00\x01'       # block number 1
+        data = ''.join(choice(printable) for i in range(512))
+        server_response_1 = create_server_data_response(block_number, data, server_ip, tid)
+
+        # Cliet ack response
+        ack_packet_args = create_ack_packet_args(block_number, server_ip, tid)
+
+        # Server response - socket.timeout
+        server_response_2 = timeout
+
+        # Set client expectations
+        # A list of: (<ordered arguments>, <empty_dictionary>)
+        expected_args = [
+                        (read_request_args,),
+                        (ack_packet_args,),
+                        ]
+        # Set server response
+        mock_socket.recvfrom.side_effect = [server_response_1, server_response_2]
+
+        ### Test
+        client = Client(mock_socket)
+        assert False == client.read(filename, server_ip, server_port)
 
         ### Check expectations
         assert expected_args == mock_socket.sendto.call_args_list

@@ -13,3 +13,5 @@ Do we want to try to verify the console output of client read failures? Probably
 Do we want to return an error message? Not sure yet. It is simpler to return false for now.
 
 Should we combine server ip and port/tid into a single tuple, the socket address?
+
+Revise random string generator to include all bytes of data, not just printable characters.
