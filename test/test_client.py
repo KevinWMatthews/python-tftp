@@ -128,6 +128,10 @@ def create_read_request_args(filename, server_ip, server_port):
     read_request = create_read_request(filename)
     return read_request, (server_ip, server_port)
 
+def create_ack_packet_args(block_number, server_ip, tid):
+    ack_packet = create_ack_packet(block_number)
+    return ack_packet, (server_ip, tid)
+
 def create_read_request(filename):
     read_request = OPCODE_READ
     read_request += filename
@@ -235,8 +239,9 @@ class TestClient:
         filename = 'test.txt'
         tid = 12345                     # transmission id (port) is random?
 
+        ### Set expectations
         # Client read request
-        read_request = create_read_request(filename)
+        read_request_args = create_read_request_args(filename, server_ip, server_port)
 
         # Server response - data packet
         block_number = '\x00\x01'       # block number 1
@@ -244,23 +249,20 @@ class TestClient:
         server_response = create_server_response(block_number, data, server_ip, tid)
         mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
-        # Client ack
-        ack_packet = create_ack_packet(block_number)
+        # Cliet ack response
+        ack_packet_args = create_ack_packet_args(block_number, server_ip, tid)
 
-        # Mock expectations
-        read_request_args = read_request, (server_ip, server_port)
-        ack_packet_args = ack_packet, (server_ip, tid)
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
                         (read_request_args,),
                         (ack_packet_args,)
                         ]
 
-        # Actual call
+        ### Actual call
         client = Client(mock_socket)
         assert True == client.read(filename, server_ip, server_port)
 
-        # Check expectations
+        ### Check expectations
         assert expected_args == mock_socket.sendto.call_args_list
         assert 2 == mock_socket.sendto.call_count
 
