@@ -58,9 +58,9 @@ Test list:
         <-- Data block 1
         --> Ack block 1
         <-- Failure
-                no response
+                no response (timeout)
                 wrong block number
-                ?
+                wrong opcode
         Does the client send an ack? I think not.
         Does the server retry?
 
@@ -79,8 +79,9 @@ Test list:
         <-- Data block n
         --> Ack block n
         <-- Failure
-                no response
+                no response (timeout)
                 wrong block number
+                wrong opcode
 
     Ack failure, block N.
         --> Read
@@ -167,6 +168,12 @@ def create_server_data_response(block_number, data, server_ip, tid):
 def create_server_response(packet, server_ip, tid):
     # Python's recvfrom() method returns a tuple containing: (data, socket_address)
     return (packet, (server_ip, tid))
+
+def create_packet(*fields):
+    packet = ''
+    for f in fields:
+        packet += f
+    return packet
 
 class TestClient:
 
@@ -412,6 +419,58 @@ class TestClient:
         block_number = '\x00\x03'       # Should be block number 2 but isn't
         data = 'B\x0a'                  # data in our file: 'B' and LF
         server_response_2 = create_server_data_response(block_number, data, server_ip, tid)
+
+        # Set client expectations
+        # A list of: (<ordered arguments>, <empty_dictionary>)
+        expected_args = [
+                        (read_request_args,),
+                        (ack_packet_args,),
+                        ]
+        # Set server response
+        mock_socket.recvfrom.side_effect = [server_response_1, server_response_2]
+
+        ### Test
+        client = Client(mock_socket)
+        assert False == client.read(filename, server_ip, server_port)
+
+        assert 2 == mock_socket.sendto.call_count
+        assert expected_args == mock_socket.sendto.call_args_list
+
+    '''
+    Client              Server
+    __________________________
+    Read        -->
+
+                <--     Data block 1 (== 512 K)
+    Ack block 1 -->
+
+                <--     Failure: wrong opcode
+    '''
+    def test_server_returns_wrong_opcode_on_next_block(self, mock_socket):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        read_request_args = create_read_request_args(filename, server_ip, server_port)
+
+        # Server response - data packet
+        block_number = '\x00\x01'       # block number 1
+        data = ''.join(choice(printable) for i in range(512))
+        server_response_1 = create_server_data_response(block_number, data, server_ip, tid)
+
+        # Cliet ack response
+        ack_packet_args = create_ack_packet_args(block_number, server_ip, tid)
+
+        # Server response - wrong block number
+        opcode = BYTE_OPCODE_NULL       # Should be BYTE_OPCODE_DATA
+        block_number = '\x00\x02'
+        data = 'B\x0a'                  # data in our file: 'B' and LF
+        packet = create_packet(opcode, block_number, data)
+        server_response_2 = create_server_response(packet, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
