@@ -5,6 +5,7 @@ from socket import timeout
 
 NULL_BYTE = '\x00'
 OPCODE_READ = '\x00\x01'
+OPCODE_WRITE = '\x00\x01'
 OPCODE_DATA = '\x00\x03'
 OPCODE_ACK  = '\x00\x04'
 
@@ -151,9 +152,14 @@ def create_ack_packet(block_number):
     ack_packet += block_number
     return ack_packet
 
-def create_server_response(block_number, data, server_ip, transmission_id):
+# Various server responses
+def create_server_data_response(block_number, data, server_ip, tid):
     data_packet = create_data_packet(block_number, data)
-    return (data_packet, (server_ip, transmission_id))
+    return create_server_response(data_packet, server_ip, tid)
+
+def create_server_response(packet, server_ip, tid):
+    # Python's recvfrom() method returns a tuple containing: (data, socket_address)
+    return (packet, (server_ip, tid))
 
 class TestClient:
 
@@ -217,13 +223,53 @@ class TestClient:
         # Server response
         block_number = '\x00\x02'       # Should be block number 1 but isn't
         data = 'B\x0a'                  # data in our file: 'B' and LF
-        server_response = create_server_response(block_number, data, server_ip, tid)
+        server_response = create_server_data_response(block_number, data, server_ip, tid)
 
-        # I only know how to set all expectations at once.
+        # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
                         (read_request_args,),
                         ]
+        # Set server response
+        mock_socket.recvfrom = mock.Mock(return_value = server_response)
+
+        ### Test
+        client = Client(mock_socket)
+        assert False == client.read(filename, server_ip, server_port)
+
+        ### Check expectations
+        assert expected_args == mock_socket.sendto.call_args_list
+        assert 1 == mock_socket.sendto.call_count
+
+    '''
+    Client              Server
+    __________________________
+    Read        -->
+                <--     Block number != 1
+    '''
+    def test_server_returns_wrong_opcode_to_read_request(self, mock_socket):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        read_request_args = create_read_request_args(filename, server_ip, server_port)
+
+        # Server response
+        block_number = '\x00\x01'       # Block number 1
+        data = 'B\x0a'                  # data in our file: 'B' and LF
+        data_packet = OPCODE_WRITE + block_number + data
+        server_response = create_server_response(data_packet, server_ip, tid)
+
+        # Set client expectations
+        # A list of: (<ordered arguments>, <empty_dictionary>)
+        expected_args = [
+                        (read_request_args,),
+                        ]
+        # Set server response
         mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
         ### Test
@@ -255,17 +301,18 @@ class TestClient:
         # Server response - data packet
         block_number = '\x00\x01'       # block number 1
         data = 'B\x0a'                  # data in our file: 'B' and LF
-        server_response = create_server_response(block_number, data, server_ip, tid)
+        server_response = create_server_data_response(block_number, data, server_ip, tid)
 
         # Cliet ack response
         ack_packet_args = create_ack_packet_args(block_number, server_ip, tid)
 
-        # I only know how to set all expectations at once.
+        # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
                         (read_request_args,),
                         (ack_packet_args,)
                         ]
+        # Set server response
         mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
         ### Test

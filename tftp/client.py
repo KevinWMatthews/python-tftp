@@ -1,6 +1,8 @@
 import struct
 from socket import timeout
 
+OPCODE_DATA = '\x00\x03'
+
 class Client:
     def __init__(self, socket):
         self.socket = socket
@@ -34,8 +36,14 @@ class Client:
         | Opcode |   Block #  |   Data     |
          ----------------------------------
         '''
+        opcode = packet[0] + packet[1]
+        if not opcode == OPCODE_DATA:
+            print 'Received wrong opcode!'
+            return False
+
         block_number = packet[2] + packet[3]
         if not block_number == '\x00\x01':
+            print 'Received invalid block number!'
             return False
 
         # socket_address = (ip, port/tid)
