@@ -124,6 +124,15 @@ TODO
     Do we want to convert read()'s ip and port arguments into a tuple? I think so.
 '''
 
+def expect_read_request(filename, server_ip, server_port):
+    read_request = create_read_request(filename)
+    read_request_args = read_request, (server_ip, server_port)
+    expected_args = [
+                    # A list of: (<ordered arguments>, <empty_dictionary>)
+                    (read_request_args,),
+                    ]
+    return expected_args
+
 def create_read_request(filename):
     read_request = OPCODE_READ
     read_request += filename
@@ -200,18 +209,13 @@ class TestClient:
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
-        read_request = create_read_request(filename)
 
         block_number = '\x00\x02'       # Should be block number 1 but isn't
         data = 'B\x0a'                  # data in our file: 'B' and LF
         server_response = create_server_response(block_number, data, server_ip, tid)
         mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
-        read_request_args = read_request, (server_ip, server_port)
-        expected_args = [
-                        # A list of: (<ordered arguments>, <empty_dictionary>)
-                        (read_request_args,),
-                        ]
+        expected_args = expect_read_request(filename, server_ip, server_port)
 
         # Actual call
         client = Client(mock_socket)
