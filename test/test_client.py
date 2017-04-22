@@ -5,7 +5,7 @@ from socket import timeout
 from random import choice
 from string import printable
 
-BYTE_OPCODE_NULL = '\x00'
+OPCODE_NULL = '\x00'
 OPCODE_READ = '\x00\x01'
 OPCODE_WRITE = '\x00\x02'
 OPCODE_DATA = '\x00\x03'
@@ -144,9 +144,9 @@ def create_ack_packet_args(block_number, server_ip, tid):
 def create_read_request(filename):
     read_request = OPCODE_READ
     read_request += filename
-    read_request += BYTE_OPCODE_NULL
+    read_request += OPCODE_NULL
     read_request += 'octet'
-    read_request += BYTE_OPCODE_NULL
+    read_request += OPCODE_NULL
     return read_request
 
 def create_data_packet(block_number, data):
@@ -235,9 +235,11 @@ class TestClient:
         read_request_args = create_read_request_args(filename, server_ip, server_port)
 
         # Server response
+        opcode = OPCODE_DATA
         block_number = '\x00\x02'       # Should be block number 1 but isn't
         data = 'B\x0a'                  # data in our file: 'B' and LF
-        server_response = create_server_data_response(block_number, data, server_ip, tid)
+        packet = create_packet(opcode, block_number, data)
+        server_response = create_server_response(packet, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
@@ -273,10 +275,12 @@ class TestClient:
         read_request_args = create_read_request_args(filename, server_ip, server_port)
 
         # Server response
+        opcode = OPCODE_NULL            # Should be OPCODE_DATA
         block_number = '\x00\x01'       # Block number 1
         data = 'B\x0a'                  # data in our file: 'B' and LF
         data_packet = OPCODE_WRITE + block_number + data
-        server_response = create_server_response(data_packet, server_ip, tid)
+        packet = create_packet(opcode, block_number, data)
+        server_response = create_server_response(packet, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
@@ -313,9 +317,11 @@ class TestClient:
         read_request_args = create_read_request_args(filename, server_ip, server_port)
 
         # Server response - data packet
+        opcode = OPCODE_DATA
         block_number = '\x00\x01'       # block number 1
         data = 'B\x0a'                  # data in our file: 'B' and LF
-        server_response = create_server_data_response(block_number, data, server_ip, tid)
+        packet = create_packet(opcode, block_number, data)
+        server_response = create_server_response(packet, server_ip, tid)
 
         # Cliet ack response
         ack_packet_args = create_ack_packet_args(block_number, server_ip, tid)
@@ -359,9 +365,11 @@ class TestClient:
         read_request_args = create_read_request_args(filename, server_ip, server_port)
 
         # Server response - data packet
+        opcode = OPCODE_DATA
         block_number = '\x00\x01'       # block number 1
         data = ''.join(choice(printable) for i in range(512))
-        server_response_1 = create_server_data_response(block_number, data, server_ip, tid)
+        packet = create_packet(opcode, block_number, data)
+        server_response_1 = create_server_response(packet, server_ip, tid)
 
         # Cliet ack response
         ack_packet_args = create_ack_packet_args(block_number, server_ip, tid)
@@ -416,9 +424,11 @@ class TestClient:
         ack_packet_args = create_ack_packet_args(block_number, server_ip, tid)
 
         # Server response - wrong block number
+        opcode = OPCODE_DATA
         block_number = '\x00\x03'       # Should be block number 2 but isn't
         data = 'B\x0a'                  # data in our file: 'B' and LF
-        server_response_2 = create_server_data_response(block_number, data, server_ip, tid)
+        packet = create_packet(opcode, block_number, data)
+        server_response_2 = create_server_response(packet, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
@@ -458,15 +468,17 @@ class TestClient:
         read_request_args = create_read_request_args(filename, server_ip, server_port)
 
         # Server response - data packet
+        opcode = OPCODE_DATA
         block_number = '\x00\x01'       # block number 1
         data = ''.join(choice(printable) for i in range(512))
-        server_response_1 = create_server_data_response(block_number, data, server_ip, tid)
+        packet = create_packet(opcode, block_number, data)
+        server_response_1 = create_server_response(packet, server_ip, tid)
 
         # Cliet ack response
         ack_packet_args = create_ack_packet_args(block_number, server_ip, tid)
 
         # Server response - wrong block number
-        opcode = BYTE_OPCODE_NULL       # Should be BYTE_OPCODE_DATA
+        opcode = OPCODE_NULL            # Should be OPCODE_DATA
         block_number = '\x00\x02'
         data = 'B\x0a'                  # data in our file: 'B' and LF
         packet = create_packet(opcode, block_number, data)
