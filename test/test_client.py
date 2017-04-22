@@ -122,9 +122,14 @@ Test list:
         2
         65535   (original TFTP size limit was 512K * 65535 = 32 M)
         65536?  this works with some tftp server implementations; the block number just rolls over.
+    Different modes:
+        octed
+        mail
+        netascii
 
 TODO
     Do we want to convert read()'s ip and port arguments into a tuple? I think so.
+    If input sanitation fails, do we send a response to the server?
 '''
 
 def create_read_request_args(filename, server_ip, server_port):

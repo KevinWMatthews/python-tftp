@@ -11,6 +11,7 @@ Do we need to sanitize the data portion of the packet in client.read()? For exam
 
 __parse_response_packet() probably needs a try statement.
 Should we move input sanitation into __parse_response_packet()? We can't because we won't always expect the same opcode or block number.
+*** If input sanitation fails, do we send a response to the server?
 
 Misc:
 
