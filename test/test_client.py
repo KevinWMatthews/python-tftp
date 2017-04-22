@@ -124,14 +124,9 @@ TODO
     Do we want to convert read()'s ip and port arguments into a tuple? I think so.
 '''
 
-def expect_read_request(filename, server_ip, server_port):
+def create_read_request_args(filename, server_ip, server_port):
     read_request = create_read_request(filename)
-    read_request_args = read_request, (server_ip, server_port)
-    expected_args = [
-                    # A list of: (<ordered arguments>, <empty_dictionary>)
-                    (read_request_args,),
-                    ]
-    return expected_args
+    return read_request, (server_ip, server_port)
 
 def create_read_request(filename):
     read_request = OPCODE_READ
@@ -215,7 +210,11 @@ class TestClient:
         server_response = create_server_response(block_number, data, server_ip, tid)
         mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
-        expected_args = expect_read_request(filename, server_ip, server_port)
+        read_request_args = create_read_request_args(filename, server_ip, server_port)
+        # A list of: (<ordered arguments>, <empty_dictionary>)
+        expected_args = [
+                        (read_request_args,),
+                        ]
 
         # Actual call
         client = Client(mock_socket)
@@ -251,8 +250,8 @@ class TestClient:
         # Mock expectations
         read_request_args = read_request, (server_ip, server_port)
         ack_packet_args = ack_packet, (server_ip, tid)
+        # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
-                        # A list of: (<ordered arguments>, <empty_dictionary>)
                         (read_request_args,),
                         (ack_packet_args,)
                         ]

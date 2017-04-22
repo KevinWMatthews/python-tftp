@@ -7,6 +7,8 @@ The block number is an unprintable character. How can I display the hex code?
 
 Misc:
 
+# There is something funky with the list of arguments. I have to create it all at once with the tuples?
+
 Do we want to try to verify the console output of client read failures? Probably not.
 Do we want to return an error message? Not sure yet. It is simpler to return false for now.
 
