@@ -35,8 +35,9 @@ Test list:
     Server response failure, block 1.
         --> Read
         <-- Failure:
-                no response
+                no response (timeout)
                 wrong block number
+                wrong opcode
 
     Ack failure, block 1.
         --> Read
@@ -57,6 +58,8 @@ Test list:
                 no response
                 wrong block number
                 ?
+        Does the client send an ack? I think not.
+        Does the server retry?
 
     Ack failure, block n.
         --> Read
@@ -140,6 +143,10 @@ def create_ack_packet(block_number):
     ack_packet += block_number
     return ack_packet
 
+def create_server_response(block_number, data, server_ip, transmission_id):
+    data_packet = create_data_packet(block_number, data)
+    return (data_packet, (server_ip, transmission_id))
+
 class TestClient:
 
     @pytest.fixture
@@ -150,30 +157,80 @@ class TestClient:
     def test_client_can_be_created(self, mock_socket):
         assert Client(mock_socket)
 
-    def test_server_does_not_respond(self, mock_socket):
-        mock_socket.recvfrom.side_effect = timeout  # The docs say to use Exception(RuntimeError), but I can't figure out how to test that.
+    '''
+    Client              Server
+    __________________________
+    Failure     -->
+    '''
+    @pytest.mark.skip(reason='Not yet sure how to test this')
+    def test_client_fails_to_send_read_request(self, mock_socket):
+        pass
+
+    '''
+    Client              Server
+    __________________________
+    Read        -->
+                <--     Timeout
+    '''
+    def test_server_does_not_respond_to_read_request(self, mock_socket):
+        ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
 
+        ### Set expectations
+        mock_socket.recvfrom.side_effect = timeout  # socket.timeout
         read_request = create_read_request(filename)
 
+        ### Test
         client = Client(mock_socket)
-        #TODO do we want to try to verify the console output? Probably not.
-        # Do we want to return an error message? Not sure yet, and this is simpler.
         assert False == client.read(filename, server_ip, server_port)
 
     '''
-    Client          Server
-    ______________________
-    Read    -->
-            <--     Data 1 (< 512 K)
-    Ack     -->
+    Client              Server
+    __________________________
+    Read        -->
+                <--     Block number != 1
+    '''
+    def test_server_returns_wrong_block_number_to_read_request(self, mock_socket):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        read_request = create_read_request(filename)
+
+        block_number = '\x00\x02'       # Should be block number 1 but isn't
+        data = 'B\x0a'                  # data in our file: 'B' and LF
+        server_response = create_server_response(block_number, data, server_ip, tid)
+        mock_socket.recvfrom = mock.Mock(return_value = server_response)
+
+        read_request_args = read_request, (server_ip, server_port)
+        expected_args = [
+                        # A list of: (<ordered arguments>, <empty_dictionary>)
+                        (read_request_args,),
+                        ]
+
+        # Actual call
+        client = Client(mock_socket)
+        assert False == client.read(filename, server_ip, server_port)
+        assert expected_args == mock_socket.sendto.call_args_list
+        assert 1 == mock_socket.sendto.call_count
+
+    '''
+    Client              Server
+    __________________________
+    Read        -->
+                <--     Data block 1 (== 512 K)
+    Ack block 1 -->
     '''
     def test_parse_first_read_response(self, mock_socket):
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
+        tid = 12345                     # transmission id (port) is random?
 
         # Client read request
         read_request = create_read_request(filename)
@@ -181,10 +238,7 @@ class TestClient:
         # Server response - data packet
         block_number = '\x00\x01'       # block number 1
         data = 'B\x0a'                  # data in our file: 'B' and LF
-        data_packet = create_data_packet(block_number, data)
-
-        tid = 12345                     # transmission id (port) is random?
-        server_response = (data_packet, (server_ip, tid))
+        server_response = create_server_response(block_number, data, server_ip, tid)
         mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
         # Client ack
@@ -201,8 +255,9 @@ class TestClient:
 
         # Actual call
         client = Client(mock_socket)
-        client.read(filename, server_ip, server_port)
+        assert True == client.read(filename, server_ip, server_port)
 
+        # Check expectations
         assert expected_args == mock_socket.sendto.call_args_list
         assert 2 == mock_socket.sendto.call_count
 

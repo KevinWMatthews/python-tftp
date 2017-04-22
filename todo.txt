@@ -1,0 +1,13 @@
+Add server retries to test list.
+
+For block number failure in client read:
+
+# print 'Received wrong block number! Expecting 1 but got %s' % block_number
+The block number is an unprintable character. How can I display the hex code?
+
+Misc:
+
+Do we want to try to verify the console output of client read failures? Probably not.
+Do we want to return an error message? Not sure yet. It is simpler to return false for now.
+
+Should we combine server ip and port/tid into a single tuple, the socket address?
