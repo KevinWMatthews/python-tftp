@@ -5,9 +5,9 @@ from socket import timeout
 from random import choice
 from string import printable
 
-NULL_BYTE = '\x00'
+BYTE_OPCODE_NULL = '\x00'
 OPCODE_READ = '\x00\x01'
-OPCODE_WRITE = '\x00\x01'
+OPCODE_WRITE = '\x00\x02'
 OPCODE_DATA = '\x00\x03'
 OPCODE_ACK  = '\x00\x04'
 
@@ -138,9 +138,9 @@ def create_ack_packet_args(block_number, server_ip, tid):
 def create_read_request(filename):
     read_request = OPCODE_READ
     read_request += filename
-    read_request += NULL_BYTE
+    read_request += BYTE_OPCODE_NULL
     read_request += 'octet'
-    read_request += NULL_BYTE
+    read_request += BYTE_OPCODE_NULL
     return read_request
 
 def create_data_packet(block_number, data):

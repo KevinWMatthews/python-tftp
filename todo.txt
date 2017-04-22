@@ -5,6 +5,13 @@ For block number failure in client read:
 # print 'Received wrong block number! Expecting 1 but got %s' % block_number
 The block number is an unprintable character. How can I display the hex code?
 
+Can we import the opcodes from the class?
+
+Do we need to sanitize the data portion of the packet in client.read()? For example, do we send an ack if we receive a packet that is < 512K? I'm pretty sure.
+
+__parse_response_packet() probably needs a try statement.
+Should we move input sanitation into __parse_response_packet()? We can't because we won't always expect the same opcode or block number.
+
 Misc:
 
 # There is something funky with the list of arguments. I have to create it all at once with the tuples?
