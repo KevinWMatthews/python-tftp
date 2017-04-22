@@ -43,7 +43,7 @@ class Client:
 
             packet = self.__create_ack_packet(block_number)
             self.socket.sendto(packet, (server_ip, tid))
-            if not len(data) == 512:        # Received stop condition. Exit.
+            if self.__received_stop_condition(data):
                 return True
 
     def __create_read_packet(self, filename):
@@ -82,3 +82,6 @@ class Client:
         block_number = packet[2] + packet[3]
         data = packet[4:]
         return opcode, block_number, data
+
+    def __received_stop_condition(self, data):
+        return not len(data) == 512
