@@ -124,14 +124,17 @@ TODO
     Do we want to convert read()'s ip and port arguments into a tuple? I think so.
 '''
 
+# A list of arguments from all client communication.
+# Use this to identify what the client sent and in what order.
+# Each list element is a tuple taken from each method invocation:
+#   (<ordered_arguments>, <keywork_arguments>)
+sendto_args = []
+
 def expect_read_request(filename, server_ip, server_port):
     read_request = create_read_request(filename)
     read_request_args = read_request, (server_ip, server_port)
-    expected_args = [
-                    # A list of: (<ordered arguments>, <empty_dictionary>)
-                    (read_request_args,),
-                    ]
-    return expected_args
+    # We have no keyword arguments
+    sendto_args.append( (read_request_args,) )
 
 def create_read_request(filename):
     read_request = OPCODE_READ
@@ -215,12 +218,12 @@ class TestClient:
         server_response = create_server_response(block_number, data, server_ip, tid)
         mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
-        expected_args = expect_read_request(filename, server_ip, server_port)
+        expect_read_request(filename, server_ip, server_port)
 
         # Actual call
         client = Client(mock_socket)
         assert False == client.read(filename, server_ip, server_port)
-        assert expected_args == mock_socket.sendto.call_args_list
+        assert sendto_args == mock_socket.sendto.call_args_list
         assert 1 == mock_socket.sendto.call_count
 
     '''
