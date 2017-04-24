@@ -114,6 +114,11 @@ Test list:
         mail
         netascii
 
+    Success on block 1.
+    Success on block 2.
+    Success on block n.
+
 TODO
     Do we want to convert read()'s ip and port arguments into a tuple? I think so.
     If input sanitation fails, do we send a response to the server?
+    What if we want to transmit two complete blocks? 512K and 512K. What is the stop condition? An empty third block?

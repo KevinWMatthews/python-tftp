@@ -374,6 +374,72 @@ class TestClient:
         assert 2 == mock_socket.sendto.call_count
         assert expected_args == mock_socket.sendto.call_args_list
 
+    '''
+    Client              Server
+    __________________________
+    Read        -->
+
+                <--     Data block 1 (== 512 K)
+    Ack block 1 -->
+
+                <--     Data block 2 (< 512 K)
+    Ack block 2 -->
+    '''
+    @pytest.mark.skip(reason='need to refactor block number')
+    def test_transfer_finishes_successfully_on_second_block(self, mock_socket):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        packet = create_read_packet(filename)
+        read_packet = create_socket_tuple(packet, server_ip, server_port)
+
+        #Todo Expand to 512K
+        # Server response - data packet
+        block_number = '\x00\x01'       # block number 1
+        data = 'B\x0a'                  # data in our file: 'B' and LF
+        packet = create_data_response(block_number, data)
+        server_response_1 = create_socket_tuple(packet, server_ip, tid)
+
+        # Cliet ack response
+        packet = create_ack_packet(block_number)
+        client_ack_1 = create_socket_tuple(packet, server_ip, tid)
+
+        # Server response - data packet
+        block_number = '\x00\x02'       # block number 2
+        data = 'B\x0a'                  # data in our file: 'B' and LF
+        packet = create_data_response(block_number, data)
+        server_response_2 = create_socket_tuple(packet, server_ip, tid)
+
+        # Cliet ack response
+        packet = create_ack_packet(block_number)
+        client_ack_2 = create_socket_tuple(packet, server_ip, tid)
+
+        # Set client expectations
+        # A list of: (<ordered arguments>, <empty_dictionary>)
+        expected_args = [
+                (read_packet,),
+                (client_ack_1,),
+                (client_ack_2,),
+                ]
+        # Set server response
+        mock_socket.recvfrom.side_effect = [
+                server_response_1,
+                server_response_2
+                ]
+
+        ### Test
+        client = Client(mock_socket)
+        assert True == client.read(filename, server_ip, server_port)
+
+        ### Check expectations
+        assert 3 == mock_socket.sendto.call_count
+        assert expected_args == mock_socket.sendto.call_args_list
+
     @pytest.mark.skip('todo')
     def test_read_a_different_filename(self, mock_socket):
         pass

@@ -37,7 +37,7 @@ class Client:
                 print 'Received wrong opcode!'
                 return False
 
-            if not block_number == '\x00\x01':
+            if not block_number == 1:
                 print 'Received invalid block number!'
                 return False
 
@@ -79,9 +79,19 @@ class Client:
          ----------------------------------
         '''
         opcode = packet[0] + packet[1]
-        block_number = packet[2] + packet[3]
+        block_bytes = packet[2] + packet[3]
+        block_number = self.__unpack_block_number(block_bytes)
         data = packet[4:]
         return opcode, block_number, data
 
     def __received_stop_condition(self, data):
         return not len(data) == 512
+
+    def __unpack_block_number(self, string):
+        # unpack() returns a tuple.
+        # The number of elements in the tuple matches the number of elements
+        # in unpack's format string.
+        format_string = '!'             # Network (big endian)
+        format_string += 'H'            # block number - two-byte unsigned short
+        block_tuple = struct.unpack(format_string, string)
+        return block_tuple[0]
