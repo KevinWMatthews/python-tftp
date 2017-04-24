@@ -43,6 +43,9 @@ def create_socket_tuple(packet, ip, port):
 def pack_block_number(block_number):
     return pack('!H', block_number)
 
+def create_random_data_string(n_bytes):
+    random_chars = (choice(printable) for i in range(n_bytes))
+    return ''.join(random_chars)
 
 class TestClient:
 
@@ -245,7 +248,7 @@ class TestClient:
 
         # Server response - data packet
         block_number = 1
-        data = ''.join(choice(printable) for i in range(512))
+        data = create_random_data_string(512)
         packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
 
@@ -297,7 +300,7 @@ class TestClient:
 
         # Server response - data packet
         block_number = 1
-        data = ''.join(choice(printable) for i in range(512))
+        data = create_random_data_string(512)
         packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
 
@@ -351,7 +354,7 @@ class TestClient:
 
         # Server response - data packet
         block_number = 1
-        data = ''.join(choice(printable) for i in range(512))
+        data = create_random_data_string(512)
         packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
 
@@ -393,7 +396,6 @@ class TestClient:
                 <--     Data block 2 (< 512 K)
     Ack block 2 -->
     '''
-    @pytest.mark.skip(reason='need to refactor block number')
     def test_transfer_finishes_successfully_on_second_block(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
@@ -409,7 +411,7 @@ class TestClient:
         #Todo Expand to 512K
         # Server response - data packet
         block_number = 1
-        data = 'B\x0a'                  # data in our file: 'B' and LF
+        data = create_random_data_string(512)
         packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
 

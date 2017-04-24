@@ -21,6 +21,7 @@ class Client:
         packet = self.__create_read_packet(filename)
         self.socket.sendto(packet, (ip, port))
 
+        block_count = 0
         while True:
             try:
                 # This returns two tuples, nested:
@@ -31,13 +32,14 @@ class Client:
                 print 'Failed to receive from server: %s' % msg
                 return False
 
+            block_count += 1
             opcode, block_number, data = self.__parse_response_packet(packet)
 
             if not opcode == BYTE_OPCODE_DATA:
                 print 'Received wrong opcode!'
                 return False
 
-            if not block_number == 1:
+            if not block_number == block_count:
                 print 'Received invalid block number!'
                 return False
 
@@ -52,7 +54,7 @@ class Client:
 
     def __create_ack_packet(self, block_number):
         format_string = self.__create_ack_format_string()
-        return struct.pack(format_string, 4, 1)
+        return struct.pack(format_string, 4, block_number)
 
     def __create_read_format_string(self, filename):
         format_string = '!'             # Network (big endian)
