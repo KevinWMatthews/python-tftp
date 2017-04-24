@@ -54,7 +54,7 @@ class Client:
 
     def __create_ack_packet(self, block_number):
         format_string = self.__create_ack_format_string()
-        return struct.pack(format_string, 4, block_number)
+        return struct.pack(format_string, OPCODE_ACK, block_number)
 
     def __create_read_format_string(self, filename):
         format_string = '!'             # Network (big endian)
