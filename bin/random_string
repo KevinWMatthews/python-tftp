@@ -7,5 +7,5 @@ def create_random_data_string(n_bytes):
     random_chars = (choice(printable) for i in range(n_bytes))
     return ''.join(random_chars)
 
-if __name__ == __main__:
-    create_random_data_string
+if __name__ == '__main__':
+    print create_random_data_string(513)

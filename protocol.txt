@@ -32,3 +32,21 @@ Octet mode is used to transfer a file that is in the 8-bit
    DEC-20, a 36 bit machine, this is four 8-bit bytes to a word with
    four bits of breakage.  If a host receives a octet file and then
    returns it, the returned file must be identical to the original.
+
+Any transfer begins with a request to read or write a file, which
+   also serves to request a connection.  If the server grants the
+   request, the connection is opened and the file is sent in fixed
+   length blocks of 512 bytes.  Each data packet contains one block of
+   data, and must be acknowledged by an acknowledgment packet before the
+   next packet can be sent.  A data packet of less than 512 bytes
+   signals termination of a transfer.  If a packet gets lost in the
+   network, the intended recipient will timeout and may retransmit his
+   last packet (which may be data or an acknowledgment), thus causing
+   the sender of the lost packet to retransmit that lost packet.  The
+   sender has to keep just one packet on hand for retransmission, since
+   the lock step acknowledgment guarantees that all older packets have
+   been received.
+
+The entire packet (including opcode and byte number) is 512 bytes, not just the data field.
+If the packet length is less than 512 bytes, the transmission is over.
+What if the packet is greater than 512 bytes? Might be a transmission error?

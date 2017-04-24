@@ -18,8 +18,8 @@ class Client:
         self.socket = socket
 
     def read(self, filename, ip, port):
-        packet = self.__create_read_packet(filename)
-        self.socket.sendto(packet, (ip, port))
+        read_packet = self.__create_read_packet(filename)
+        self.socket.sendto(read_packet, (ip, port))
 
         block_count = 0
         while True:
@@ -27,13 +27,13 @@ class Client:
                 # This returns two tuples, nested:
                 #   (packet, (ip, port))
                 # The Transmission ID is the response port that the server chooses.
-                packet, (server_ip, tid) = self.socket.recvfrom(512)
+                receive_packet, (server_ip, tid) = self.socket.recvfrom(512)
             except timeout, msg:
                 print 'Failed to receive from server: %s' % msg
                 return False
 
             block_count += 1
-            opcode, block_number, data = self.__parse_response_packet(packet)
+            opcode, block_number, data = self.__parse_receive_packet(receive_packet)
 
             if not opcode == BYTE_OPCODE_DATA:
                 print 'Received wrong opcode!'
@@ -43,9 +43,10 @@ class Client:
                 print 'Received invalid block number!'
                 return False
 
-            packet = self.__create_ack_packet(block_number)
-            self.socket.sendto(packet, (server_ip, tid))
-            if self.__received_stop_condition(data):
+            print 'sending ack to block number %d' % block_count
+            ack_packet = self.__create_ack_packet(block_number)
+            self.socket.sendto(ack_packet, (server_ip, tid))
+            if self.__received_stop_condition(receive_packet):
                 return True
 
     def __create_read_packet(self, filename):
@@ -72,7 +73,7 @@ class Client:
         format_string += 'H'            # block number - two-byte unsigned short
         return format_string
 
-    def __parse_response_packet(self, packet):
+    def __parse_receive_packet(self, packet):
         '''
         server response packet structure:
          2 bytes     2 bytes      n bytes
@@ -86,8 +87,9 @@ class Client:
         data = packet[4:]
         return opcode, block_number, data
 
-    def __received_stop_condition(self, data):
-        return not len(data) == 512
+    def __received_stop_condition(self, packet):
+        print len(packet)
+        return not len(packet) == 512
 
     def __unpack_block_number(self, string):
         # unpack() returns a tuple.

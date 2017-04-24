@@ -13,6 +13,8 @@ __parse_response_packet() probably needs a try statement.
 Should we move input sanitation into __parse_response_packet()? We can't because we won't always expect the same opcode or block number.
 *** If input sanitation fails, do we send a response to the server?
 
+
+
 Misc:
 
 # There is something funky with the list of arguments. I have to create it all at once with the tuples?
@@ -24,4 +26,11 @@ Should we combine server ip and port/tid into a single tuple, the socket address
 
 Revise random string generator to include all bytes of data, not just printable characters.
 
-Tests: should create_packet() throw an exception if you pass it something that is not a string?Kj
+Tests: should create_packet() throw an exception if you pass it something that is not a string?
+
+
+
+Scripts:
+Modify random_string to produce a variable-length string.
+Modify tftp_get to allow the user to enter a filename.
+Specify/determine the download location.

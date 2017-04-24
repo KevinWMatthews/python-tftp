@@ -20,6 +20,14 @@ def create_ack_packet(block_number):
     block_string = pack_block_number(block_number)
     return create_packet(OPCODE_ACK, block_string)
 
+
+'''
+server response packet structure:
+ 2 bytes     2 bytes      n bytes
+ ----------------------------------
+| Opcode |   Block #  |   Data     |
+ ----------------------------------
+'''
 def create_data_response(block_number, data):
     block_string = pack_block_number(block_number)
     return create_packet(OPCODE_DATA, block_string, data)
@@ -182,7 +190,7 @@ class TestClient:
     Client              Server
     __________________________
     Read        -->
-                <--     Data block 1 (== 512 K)
+                <--     Data block 1 (== 512 byte packet)
     Ack block 1 -->
     '''
     def test_transfer_a_single_block_successfully(self, mock_socket):
@@ -229,7 +237,7 @@ class TestClient:
     __________________________
     Read        -->
 
-                <--     Data block 1 (== 512 K)
+                <--     Data block 1 (== 512 byte packet)
     Ack block 1 -->
 
                 <--     Failure: timeout
@@ -248,7 +256,8 @@ class TestClient:
 
         # Server response - data packet
         block_number = 1
-        data = create_random_data_string(512)
+        # Four bytes are taken up by the the opcode adn block number
+        data = create_random_data_string(508)
         packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
 
@@ -281,7 +290,7 @@ class TestClient:
     __________________________
     Read        -->
 
-                <--     Data block 1 (== 512 K)
+                <--     Data block 1 (== 512 byte packet)
     Ack block 1 -->
 
                 <--     Failure: block number != 2
@@ -300,7 +309,7 @@ class TestClient:
 
         # Server response - data packet
         block_number = 1
-        data = create_random_data_string(512)
+        data = create_random_data_string(508)
         packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
 
@@ -335,7 +344,7 @@ class TestClient:
     __________________________
     Read        -->
 
-                <--     Data block 1 (== 512 K)
+                <--     Data block 1 (== 512 byte packet)
     Ack block 1 -->
 
                 <--     Failure: wrong opcode
@@ -354,7 +363,7 @@ class TestClient:
 
         # Server response - data packet
         block_number = 1
-        data = create_random_data_string(512)
+        data = create_random_data_string(508)
         packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
 
@@ -390,10 +399,10 @@ class TestClient:
     __________________________
     Read        -->
 
-                <--     Data block 1 (== 512 K)
+                <--     Data block 1 (== 512 byte packet)
     Ack block 1 -->
 
-                <--     Data block 2 (< 512 K)
+                <--     Data block 2 (< 512 byte packet)
     Ack block 2 -->
     '''
     def test_transfer_finishes_successfully_on_second_block(self, mock_socket):
@@ -408,10 +417,10 @@ class TestClient:
         packet = create_read_packet(filename)
         read_packet = create_socket_tuple(packet, server_ip, server_port)
 
-        #Todo Expand to 512K
         # Server response - data packet
         block_number = 1
-        data = create_random_data_string(512)
+        # Four bytes are used by the opcode and block number
+        data = create_random_data_string(508)
         packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
 
