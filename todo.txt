@@ -23,3 +23,5 @@ Do we want to return an error message? Not sure yet. It is simpler to return fal
 Should we combine server ip and port/tid into a single tuple, the socket address?
 
 Revise random string generator to include all bytes of data, not just printable characters.
+
+Tests: should create_packet() throw an exception if you pass it something that is not a string?Kj

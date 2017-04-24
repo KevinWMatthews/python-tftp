@@ -4,6 +4,7 @@ import mock
 from socket import timeout
 from random import choice
 from string import printable
+from struct import pack
 
 OPCODE_NULL = '\x00'
 OPCODE_READ = '\x00\x01'
@@ -16,13 +17,16 @@ def create_read_packet(filename):
     return create_packet(OPCODE_READ, filename, OPCODE_NULL, 'octet', OPCODE_NULL)
 
 def create_ack_packet(block_number):
-    return create_packet(OPCODE_ACK, block_number)
-    
+    block_string = pack_block_number(block_number)
+    return create_packet(OPCODE_ACK, block_string)
+
 def create_data_response(block_number, data):
-    return create_packet(OPCODE_DATA, block_number, data)
+    block_string = pack_block_number(block_number)
+    return create_packet(OPCODE_DATA, block_string, data)
 
 # Create a general packet from the fields given.
 # Fields are concatenated in sequential order.
+# All fields must be of the same type (assumed to be a string).
 def create_packet(*fields):
     packet = ''
     for f in fields:
@@ -34,6 +38,10 @@ def create_packet(*fields):
 # They package the ip and port together - the socket address.
 def create_socket_tuple(packet, ip, port):
     return (packet, (ip, port))
+
+# Return the block number as a string of hex
+def pack_block_number(block_number):
+    return pack('!H', block_number)
 
 
 class TestClient:
@@ -104,7 +112,7 @@ class TestClient:
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Server response
-        block_number = '\x00\x02'       # Should be block number 1 but isn't
+        block_number = 2                # Should be block number 1 but isn't
         data = 'B\x0a'                  # data in our file: 'B' and LF
         packet = create_data_response(block_number, data)
         server_response = create_socket_tuple(packet, server_ip, tid)
@@ -145,7 +153,7 @@ class TestClient:
 
         # Server response
         opcode = OPCODE_NULL            # Should be OPCODE_DATA
-        block_number = '\x00\x01'       # Block number 1
+        block_number = pack_block_number(1)
         data = 'B\x0a'                  # data in our file: 'B' and LF
         data_packet = OPCODE_WRITE + block_number + data
         packet = create_packet(opcode, block_number, data)
@@ -187,7 +195,7 @@ class TestClient:
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Server response - data packet
-        block_number = '\x00\x01'       # block number 1
+        block_number = 1
         data = 'B\x0a'                  # data in our file: 'B' and LF
         packet = create_data_response(block_number, data)
         server_response = create_socket_tuple(packet, server_ip, tid)
@@ -236,7 +244,7 @@ class TestClient:
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Server response - data packet
-        block_number = '\x00\x01'       # block number 1
+        block_number = 1
         data = ''.join(choice(printable) for i in range(512))
         packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
@@ -288,7 +296,7 @@ class TestClient:
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Server response - data packet
-        block_number = '\x00\x01'       # block number 1
+        block_number = 1
         data = ''.join(choice(printable) for i in range(512))
         packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
@@ -298,7 +306,7 @@ class TestClient:
         ack_packet_args = create_socket_tuple(packet, server_ip, tid)
 
         # Server response - wrong block number
-        block_number = '\x00\x03'       # Should be block number 2 but isn't
+        block_number = 3                # Should be block number 2 but isn't
         data = 'B\x0a'                  # data in our file: 'B' and LF
         packet = create_data_response(block_number, data)
         server_response_2 = create_socket_tuple(packet, server_ip, tid)
@@ -342,7 +350,7 @@ class TestClient:
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Server response - data packet
-        block_number = '\x00\x01'       # block number 1
+        block_number = 1
         data = ''.join(choice(printable) for i in range(512))
         packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
@@ -353,7 +361,7 @@ class TestClient:
 
         # Server response - wrong block number
         opcode = OPCODE_NULL            # Should be OPCODE_DATA
-        block_number = '\x00\x02'
+        block_number = pack_block_number(2)
         data = 'B\x0a'                  # data in our file: 'B' and LF
         packet = create_packet(opcode, block_number, data)
         server_response_2 = create_socket_tuple(packet, server_ip, tid)
@@ -400,7 +408,7 @@ class TestClient:
 
         #Todo Expand to 512K
         # Server response - data packet
-        block_number = '\x00\x01'       # block number 1
+        block_number = 1
         data = 'B\x0a'                  # data in our file: 'B' and LF
         packet = create_data_response(block_number, data)
         server_response_1 = create_socket_tuple(packet, server_ip, tid)
@@ -410,7 +418,7 @@ class TestClient:
         client_ack_1 = create_socket_tuple(packet, server_ip, tid)
 
         # Server response - data packet
-        block_number = '\x00\x02'       # block number 2
+        block_number = 2
         data = 'B\x0a'                  # data in our file: 'B' and LF
         packet = create_data_response(block_number, data)
         server_response_2 = create_socket_tuple(packet, server_ip, tid)
