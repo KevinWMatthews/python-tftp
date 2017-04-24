@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+
+from random import choice
+from string import printable
+
+def create_random_data_string(n_bytes):
+    random_chars = (choice(printable) for i in range(n_bytes))
+    return ''.join(random_chars)
+
+if __name__ == __main__:
+    create_random_data_string
