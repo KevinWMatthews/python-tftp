@@ -13,6 +13,9 @@ __parse_response_packet() probably needs a try statement.
 Should we move input sanitation into __parse_response_packet()? We can't because we won't always expect the same opcode or block number.
 *** If input sanitation fails, do we send a response to the server?
 
+Deal with the server missing our ack and sending the same packet again.
+    Wonder how to test this in the real world. Maybe have a dummy socket that we can swap in somehow?
+
 
 
 Misc:

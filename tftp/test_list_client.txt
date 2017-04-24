@@ -31,11 +31,20 @@ Test list:
     Ack failure, block 1.
         --> Read
         <-- Data block 1
-        --> Failure
-                ?
+        --> Failure: ack block 1
+                packet not received
+        <-- Data block 1
 
     Valid transmission, 1 block:
         --> Read
+        <-- Data block 1
+        --> Ack block 1
+
+    Valid transmission after ack failure, block 1.
+        --> Read
+        <-- Data block 1
+        --> Failure: ack block 1
+                packet not received
         <-- Data block 1
         --> Ack block 1
 
@@ -50,13 +59,16 @@ Test list:
         Does the client send an ack? I think not.
         Does the server retry?
 
-    Ack failure, block n.
+    Two ack failures, block n.
         --> Read
         <-- Data block 1
         --> Ack block 1
         <-- Data block n
-        --> Failure
-                ?
+        --> Failure: ack block n
+                packet not received
+        <-- Data block n
+        --> Failure: ack block n
+                packet not received
 
     Server response failure, block N.
         --> Read
@@ -85,6 +97,45 @@ Test list:
         --> Ack block 1
         <-- Data block n
         --> Ack block n
+        <-- Data block N
+        --> Ack block N
+
+    Valid transmission with ack failure, N blocks.
+        --> Read
+        <-- Data block 1
+        --> Ack block 1
+        <-- Data block n
+        --> Failure: ack block n
+                packet not received
+        <-- Data block n
+        --> Ack block n
+        <-- Data block N
+        --> Ack block N
+
+    Ack failure on final block, N blocks.
+        --> Read
+        <-- Data block 1
+        --> Ack block 1
+        <-- Data block n
+        <-- Data block n
+        --> Ack block n
+        <-- Data block N
+        --> Failure: ack block N
+                packet not received
+        <-- Data block N
+        --> Failure: ack block N
+                packet not received
+
+    Valid transmission with ack failure on final block, N blocks.
+        --> Read
+        <-- Data block 1
+        --> Ack block 1
+        <-- Data block n
+        <-- Data block n
+        --> Ack block n
+        <-- Data block N
+        --> Failure: ack block N
+                packet not received
         <-- Data block N
         --> Ack block N
 
