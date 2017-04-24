@@ -116,7 +116,7 @@ class TestClient:
 
         # Server response
         block_number = 2                # Should be block number 1 but isn't
-        data = 'B\x0a'                  # data in our file: 'B' and LF
+        data = create_random_data_string(1)
         packet = create_data_response(block_number, data)
         server_response = create_socket_tuple(packet, server_ip, tid)
 
@@ -157,7 +157,7 @@ class TestClient:
         # Server response
         opcode = OPCODE_NULL            # Should be OPCODE_DATA
         block_number = pack_block_number(1)
-        data = 'B\x0a'                  # data in our file: 'B' and LF
+        data = create_random_data_string(1)
         data_packet = OPCODE_WRITE + block_number + data
         packet = create_packet(opcode, block_number, data)
         server_response = create_socket_tuple(packet, server_ip, tid)
@@ -199,7 +199,7 @@ class TestClient:
 
         # Server response - data packet
         block_number = 1
-        data = 'B\x0a'                  # data in our file: 'B' and LF
+        data = create_random_data_string(1)
         packet = create_data_response(block_number, data)
         server_response = create_socket_tuple(packet, server_ip, tid)
 
@@ -310,7 +310,7 @@ class TestClient:
 
         # Server response - wrong block number
         block_number = 3                # Should be block number 2 but isn't
-        data = 'B\x0a'                  # data in our file: 'B' and LF
+        data = create_random_data_string(1)
         packet = create_data_response(block_number, data)
         server_response_2 = create_socket_tuple(packet, server_ip, tid)
 
@@ -365,7 +365,7 @@ class TestClient:
         # Server response - wrong block number
         opcode = OPCODE_NULL            # Should be OPCODE_DATA
         block_number = pack_block_number(2)
-        data = 'B\x0a'                  # data in our file: 'B' and LF
+        data = create_random_data_string(1)
         packet = create_packet(opcode, block_number, data)
         server_response_2 = create_socket_tuple(packet, server_ip, tid)
 
@@ -421,7 +421,7 @@ class TestClient:
 
         # Server response - data packet
         block_number = 2
-        data = 'B\x0a'                  # data in our file: 'B' and LF
+        data = create_random_data_string(1)
         packet = create_data_response(block_number, data)
         server_response_2 = create_socket_tuple(packet, server_ip, tid)
 
