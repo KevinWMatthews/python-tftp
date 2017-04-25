@@ -8,4 +8,4 @@ def create_random_data_string(n_bytes):
     return ''.join(random_chars)
 
 if __name__ == '__main__':
-    print create_random_data_string(513)
+    print create_random_data_string(512-1)      # subtract 1 for a line feed

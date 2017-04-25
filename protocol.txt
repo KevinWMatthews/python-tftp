@@ -47,6 +47,16 @@ Any transfer begins with a request to read or write a file, which
    the lock step acknowledgment guarantees that all older packets have
    been received.
 
-The entire packet (including opcode and byte number) is 512 bytes, not just the data field.
-If the packet length is less than 512 bytes, the transmission is over.
+The end of a transfer is marked by a DATA packet that contains
+   between 0 and 511 bytes of data (i.e., Datagram length < 516).
+
+If a data packet is exactly 512 bytes long, the server will/must send a second packet
+with 0 bytes of data. Think about it; 512 bytes means that more data is coming,
+so more data must be sent. There is nothing to send, however, so simply send an empty packet.
+
+The length of a full packet (signalling that transmission will continue) is 516 bytes.
+This contains the 2-byte opcode, the 2-byte block number, and the 512 byte data field.
+If the length of the data field is less than 512 bytes, the transmission is over.
+It is best to test the length of the data field. If the packet length is < 516 bytes
+but the data field is 512 bytes, there is corruption in the opcode or block number.
 What if the packet is greater than 512 bytes? Might be a transmission error?

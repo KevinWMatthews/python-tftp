@@ -16,6 +16,10 @@ Should we move input sanitation into __parse_response_packet()? We can't because
 Deal with the server missing our ack and sending the same packet again.
     Wonder how to test this in the real world. Maybe have a dummy socket that we can swap in somehow?
 
+Handle error messages from server:
+    File not found
+
+Add test case for when the data field is exactly 512 bytes. In this case the server will send a second, empty packet.
 
 
 Misc:
