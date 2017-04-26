@@ -8,5 +8,5 @@ setup(name='tftp',
     license='MIT',
     packages=['tftp'],
     zip_safe=False,
-    scripts=['bin/tftp_get', 'bin/random_string'],
+    scripts=['bin/tftp_get', 'bin/generate_random_string'],
 )
