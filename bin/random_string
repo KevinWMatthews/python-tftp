@@ -1,11 +1,22 @@
 #!/usr/bin/env python
 
-from random import choice
-from string import printable
+import argparse
+import random
+import string
+
+def main():
+    print create_random_data_string(number_of_bytes)
 
 def create_random_data_string(n_bytes):
-    random_chars = (choice(printable) for i in range(n_bytes))
+    # subtract 1 for a line feed, which is automatically inserted by join()
+    n_bytes = n_bytes - 1
+    random_chars = (random.choice(string.printable) for i in range(n_bytes))
     return ''.join(random_chars)
 
 if __name__ == '__main__':
-    print create_random_data_string(512-1)      # subtract 1 for a line feed
+    argument_parser = argparse.ArgumentParser(description='Generate a string of random data. Terminated by a single line feed character.')
+    argument_parser.add_argument('number_of_bytes', help='The number of bytes contained in the string.', type=int)
+    args = argument_parser.parse_args()
+    number_of_bytes = args.number_of_bytes
+
+    main()
