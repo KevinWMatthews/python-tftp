@@ -27,7 +27,7 @@ class Client:
                 # This returns two tuples, nested:
                 #   (packet, (ip, port))
                 # The Transmission ID is the response port that the server chooses.
-                receive_packet, (server_ip, tid) = self.socket.recvfrom(512)
+                receive_packet, (server_ip, tid) = self.socket.recvfrom(517)
             except timeout, msg:
                 print 'Failed to receive from server: %s' % msg
                 return False
@@ -43,10 +43,11 @@ class Client:
                 print 'Received invalid block number!'
                 return False
 
-            print 'sending ack to block number %d' % block_count
+            # print 'Sending ack response to block number %d' % block_count
             ack_packet = self.__create_ack_packet(block_number)
             self.socket.sendto(ack_packet, (server_ip, tid))
-            if self.__received_stop_condition(receive_packet):
+            if self.__received_stop_condition(data):
+                print 'Download successful!'
                 return True
 
     def __create_read_packet(self, filename):
@@ -87,9 +88,16 @@ class Client:
         data = packet[4:]
         return opcode, block_number, data
 
-    def __received_stop_condition(self, packet):
-        print len(packet)
-        return not len(packet) == 512
+    def __received_stop_condition(self, data):
+        length = len(data)
+        # print 'Length of packet received: ' + str(length)
+        if length > 512:
+            print 'Received data packet larger than the 512 byte limit!'
+            return True
+        elif length < 512:
+            return True
+        elif length == 512:
+            return False
 
     def __unpack_block_number(self, string):
         # unpack() returns a tuple.

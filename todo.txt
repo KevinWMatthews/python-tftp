@@ -21,6 +21,8 @@ Handle error messages from server:
 
 Add test case for when the data field is exactly 512 bytes. In this case the server will send a second, empty packet.
 
+Add rollover test cases: 511 bytes, 512 bytes, 513 bytes?
+
 
 Misc:
 
