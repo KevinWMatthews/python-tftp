@@ -3,13 +3,14 @@
 import argparse
 import random
 import string
+import sys
 
 def main():
-    print create_random_data_string(number_of_bytes)
+    string = create_random_data_string(number_of_bytes)
+    sys.stdout.write(string)
+    sys.stdout.flush()
 
 def create_random_data_string(n_bytes):
-    # subtract 1 for a line feed, which is automatically inserted by join()
-    n_bytes = n_bytes - 1
     random_chars = (random.choice(string.printable) for i in range(n_bytes))
     return ''.join(random_chars)
 
