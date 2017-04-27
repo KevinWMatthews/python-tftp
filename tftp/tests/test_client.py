@@ -192,10 +192,10 @@ class TestClient:
     Client              Server
     __________________________
     Read        -->
-                <--     Data block 1 (== 512 bytes of data)
+                <--     Data block 1 (1 byte of data)
     Ack block 1 -->
     '''
-    def test_transfer_a_single_block_successfully(self, mock_socket):
+    def test_successfully_transfer_smallest_single_block(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -233,6 +233,53 @@ class TestClient:
         ### Check expectations
         assert 2 == mock_socket.sendto.call_count
         assert expected_args == mock_socket.sendto.call_args_list
+
+    '''
+    Client              Server
+    __________________________
+    Read        -->
+                <--     Data block 1 (== 511 bytes of data)
+    Ack block 1 -->
+    '''
+    def test_successfully_transfer_largest_single_block(self, mock_socket):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        packet = create_read_packet(filename)
+        read_request_args = create_socket_tuple(packet, server_ip, server_port)
+
+        # Server response - data packet
+        block_number = 1
+        data = create_random_data_string(MAX_DATA_SIZE-1)
+        packet = create_data_response(block_number, data)
+        server_response = create_socket_tuple(packet, server_ip, tid)
+
+        # Cliet ack response
+        packet = create_ack_packet(block_number)
+        ack_packet_args = create_socket_tuple(packet, server_ip, tid)
+
+        # Set client expectations
+        # A list of: (<ordered arguments>, <empty_dictionary>)
+        expected_args = [
+                        (read_request_args,),
+                        (ack_packet_args,),
+                        ]
+        # Set server response
+        mock_socket.recvfrom.side_effect = [server_response]
+
+        ### Test
+        client = Client(mock_socket)
+        assert True == client.read(filename, server_ip, server_port)
+
+        ### Check expectations
+        assert 2 == mock_socket.sendto.call_count
+        assert expected_args == mock_socket.sendto.call_args_list
+
 
     '''
     Client              Server
@@ -401,13 +448,77 @@ class TestClient:
     __________________________
     Read        -->
 
-                <--     Data block 1 (== 512 bytes of data)
+                <--     Data block 1 (512 bytes of data)
     Ack block 1 -->
 
-                <--     Data block 2 (< 512 bytes of data)
+                <--     Data block 2 (0 bytes of data)
     Ack block 2 -->
     '''
-    def test_transfer_finishes_successfully_on_second_block(self, mock_socket):
+    def test_largest_single_block_requires_an_empty_block_to_end_transmission(self, mock_socket):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        packet = create_read_packet(filename)
+        read_packet = create_socket_tuple(packet, server_ip, server_port)
+
+        # Server response - data packet
+        block_number = 1
+        data = create_random_data_string(MAX_DATA_SIZE)
+        packet = create_data_response(block_number, data)
+        server_response_1 = create_socket_tuple(packet, server_ip, tid)
+
+        # Cliet ack response
+        packet = create_ack_packet(block_number)
+        client_ack_1 = create_socket_tuple(packet, server_ip, tid)
+
+        # Server response - data packet
+        block_number = 2
+        data = ''
+        packet = create_data_response(block_number, data)
+        server_response_2 = create_socket_tuple(packet, server_ip, tid)
+
+        # Cliet ack response
+        packet = create_ack_packet(block_number)
+        client_ack_2 = create_socket_tuple(packet, server_ip, tid)
+
+        # Set client expectations
+        # A list of: (<ordered arguments>, <empty_dictionary>)
+        expected_args = [
+                (read_packet,),
+                (client_ack_1,),
+                (client_ack_2,),
+                ]
+        # Set server response
+        mock_socket.recvfrom.side_effect = [
+                server_response_1,
+                server_response_2
+                ]
+
+        ### Test
+        client = Client(mock_socket)
+        assert True == client.read(filename, server_ip, server_port)
+
+        ### Check expectations
+        assert 3 == mock_socket.sendto.call_count
+        assert expected_args == mock_socket.sendto.call_args_list
+
+    '''
+    Client              Server
+    __________________________
+    Read        -->
+
+                <--     Data block 1 (512 bytes of data)
+    Ack block 1 -->
+
+                <--     Data block 2 (1 byte of data)
+    Ack block 2 -->
+    '''
+    def test_successfully_transfer_small_second_block(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
