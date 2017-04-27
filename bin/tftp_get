@@ -1,13 +1,25 @@
 #!/usr/bin/env python
 
+import argparse
 from tftp import Client
 import socket
 
-filename = 'tst.txt'
-server_ip = '127.0.0.1'
-server_port = 69
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-client_socket.settimeout(2)     # Is the timeout determined by the RFC spec?
-#TODO do we need to set the socket timeout? If so, whose responsibility is this?
-client = Client(client_socket)
-client.read(filename, server_ip, server_port)
+def main():
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    #TODO do we need to set the socket timeout? If so, whose responsibility is this?
+    client_socket.settimeout(2)     # Is the timeout determined by the RFC spec?
+    client = Client(client_socket)
+    client.read(filename, server_ip, server_port)
+
+if __name__ == '__main__':
+    argument_parser = argparse.ArgumentParser(description='Get a file from a tftp server.')
+    argument_parser.add_argument('filename', help='The name of the file to download')
+    argument_parser.add_argument('--server_ip', default='127.0.0.1', help='The IP address of the TFTP server (default: 127.0.0.1)')
+    argument_parser.add_argument('--server_port', type=int, default='69', help='The port of the TFTP server (default: 69)')
+
+    args = argument_parser.parse_args()
+    filename = args.filename
+    server_ip = args.server_ip
+    server_port = args.server_port
+
+    main()
