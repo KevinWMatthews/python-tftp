@@ -15,7 +15,7 @@ def create_random_data_string(n_bytes):
 
 if __name__ == '__main__':
     argument_parser = argparse.ArgumentParser(description='Generate a string of random data. Terminated by a single line feed character.')
-    argument_parser.add_argument('number_of_bytes', type=int, help='The number of bytes contained in the string.')
+    argument_parser.add_argument('number_of_bytes', type=int, help='The number of bytes contained in the string')
     args = argument_parser.parse_args()
     number_of_bytes = args.number_of_bytes
 

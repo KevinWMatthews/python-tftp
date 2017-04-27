@@ -150,7 +150,7 @@ class TestClient:
     Client              Server
     __________________________
     Read        -->
-                <--     Fialure: opcode != OPCODE_DATA
+                <--     Failure: opcode != OPCODE_DATA
     '''
     def test_server_returns_wrong_opcode_to_read_request(self, mock_socket):
         ### Setup
