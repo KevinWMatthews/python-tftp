@@ -41,3 +41,4 @@ Scripts:
 Modify random_string to produce a variable-length string.
 Modify tftp_get to allow the user to enter a filename.
 Specify/determine the download location.
+Move testing scripts to a different folder. Also don't distribute.
