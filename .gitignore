@@ -12,3 +12,6 @@
 
 # Ignore Sublime Text files
 *.sublime-workspace
+
+# Ignore client test files
+tftp/tests/traces
