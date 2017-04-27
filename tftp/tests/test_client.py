@@ -51,10 +51,7 @@ def create_data_response(block_number, data):
 # Fields are concatenated in sequential order.
 # All fields must be of the same type (assumed to be a string).
 def create_packet(*fields):
-    packet = ''
-    for f in fields:
-        packet += f
-    return packet
+    return ''.join(fields)
 
 # Python's sendto() and recvfrom() methods accept and return a tuple containing:
 #   (data, (ip, port))
