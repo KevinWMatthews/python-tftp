@@ -40,6 +40,7 @@ class Packet:
         block_string = Packet.__pack_block_number(block_number)
         return Packet.__create_packet(Packet.OPCODE_DATA, block_string, data)
 
+    # Return the block number as a string of hex
     @staticmethod
     def __pack_block_number(block_number):
         return struct.pack('!H', block_number)

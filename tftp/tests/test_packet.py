@@ -2,21 +2,9 @@ from tftp import Packet
 
 from random import choice
 from string import printable
-from struct import pack
 
 MAX_DATA_SIZE = 512
 MAX_BLOCK_NUMBER = 65535
-
-# Create various TFTP packets
-# Python's sendto() and recvfrom() methods accept and return a tuple containing:
-#   (data, (ip, port))
-# They package the ip and port together - the socket address.
-def create_socket_tuple(packet, ip, port):
-    return (packet, (ip, port))
-
-# Return the block number as a string of hex
-def pack_block_number(block_number):
-    return pack('!H', block_number)
 
 def create_random_data_string(n_bytes):
     random_chars = (choice(printable) for i in range(n_bytes))
