@@ -3,8 +3,8 @@ import struct
 class Packet:
     OPCODE_NULL  = 0
     OPCODE_READ  = 1
-    OPCODE_WRITE = '\x00\x02'
-    OPCODE_DATA  = '\x00\x03'
+    OPCODE_WRITE = 2
+    OPCODE_DATA  = 3
     OPCODE_ACK   = 4
 
     '''
@@ -60,8 +60,21 @@ class Packet:
     '''
     @staticmethod
     def create_data_response(block_number, data):
-        block_string = Packet.__pack_block_number(block_number)
-        return Packet.__create_packet(Packet.OPCODE_DATA, block_string, data)
+        format_string = Packet.__create_data_format_string()
+        opcode_and_block = struct.pack(format_string, Packet.OPCODE_DATA, block_number)
+        return opcode_and_block + data
+
+    @staticmethod
+    def __create_data_format_string():
+        format_string = [
+            '!',           # Network (big endian)
+            'H',           # opcode - two-byte unsigned short
+            'H',           # block number - two-byte unsigned short
+        ]
+        # Rather than trying to pack a variable amount of data into the struct,
+        # we'll just insist that the data is in string format and concatenate the strings.
+        # Is this assumption valid?
+        return ''.join(format_string)
 
     # Return the block number as a string of hex
     @staticmethod
