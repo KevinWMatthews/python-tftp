@@ -28,6 +28,7 @@ class Packet:
         return ''.join(format_string)
 
     '''
+    read request packet
     2 bytes     string    1 byte     string   1 byte
     ------------------------------------------------
     | Opcode |  Filename  |   0  |    Mode    |   0  |
@@ -52,14 +53,14 @@ class Packet:
         return ''.join(format_string)
 
     '''
-    server response packet structure:
+    data packet structure:
      2 bytes     2 bytes      n bytes
      ----------------------------------
     | Opcode |   Block #  |   Data     |
      ----------------------------------
     '''
     @staticmethod
-    def create_data_response(block_number, data):
+    def create_data_packet(block_number, data):
         format_string = Packet.__create_data_format_string()
         opcode_and_block = struct.pack(format_string, Packet.OPCODE_DATA, block_number)
         return opcode_and_block + data
@@ -75,15 +76,3 @@ class Packet:
         # we'll just insist that the data is in string format and concatenate the strings.
         # Is this assumption valid?
         return ''.join(format_string)
-
-    # Return the block number as a string of hex
-    @staticmethod
-    def __pack_block_number(block_number):
-        return struct.pack('!H', block_number)
-
-    # Create a general packet from the fields given.
-    # Fields are concatenated in sequential order.
-    # All fields must be of the same type (assumed to be a string).
-    @staticmethod
-    def __create_packet(*fields):
-        return ''.join(fields)
