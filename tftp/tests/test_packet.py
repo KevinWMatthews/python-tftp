@@ -23,16 +23,6 @@ MAX_BLOCK_NUMBER = 65535
 def create_read_packet(filename):
     return create_packet(OPCODE_READ, filename, OPCODE_NULL, 'octet', OPCODE_NULL)
 
-'''
- 2 bytes     2 bytes
- ---------------------
-| Opcode |   Block #  |
- ---------------------
- '''
-def create_ack_packet(block_number):
-    block_string = pack_block_number(block_number)
-    return create_packet(OPCODE_ACK, block_string)
-
 
 '''
 server response packet structure:
@@ -67,10 +57,10 @@ def create_random_data_string(n_bytes):
 
 class TestPacket:
     def test_ack_packet_smallest_block_number(self):
-        assert '\x00\x04\x00\x00' == create_ack_packet(0)
+        assert '\x00\x04\x00\x00' == Packet.create_ack_packet(0)
 
     def test_ack_packet_largest_block_number(self):
-        assert '\x00\x04\xff\xff' == create_ack_packet(MAX_BLOCK_NUMBER)
+        assert '\x00\x04\xff\xff' == Packet.create_ack_packet(MAX_BLOCK_NUMBER)
 
     def test_read_packet_shortest_filename(self):
         assert '\x00\x01a\x00octet\x00' == create_read_packet('a')
