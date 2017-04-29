@@ -1,4 +1,5 @@
 from tftp import Packet
+import pytest
 
 from random import choice
 from string import printable
@@ -52,9 +53,39 @@ class TestPacketCreate:
 
 class TestPacketParse:
     def test_parse_ack_packet_with_smallest_block_number(self):
-        ack_packet = '\x00\x04\x00\x00'
-        assert (Packet.OPCODE_ACK, 0) == Packet.parse_ack_packet(ack_packet)
+        packet = '\x00\x04\x00\x00'
+        assert (Packet.OPCODE_ACK, 0) == Packet.parse_ack_packet(packet)
 
     def test_parse_ack_packet_with_smallest_block_number(self):
-        ack_packet = '\x00\x04\xff\xff'
-        assert (Packet.OPCODE_ACK, MAX_BLOCK_NUMBER) == Packet.parse_ack_packet(ack_packet)
+        packet = '\x00\x04\xff\xff'
+        assert (Packet.OPCODE_ACK, MAX_BLOCK_NUMBER) == Packet.parse_ack_packet(packet)
+
+    def test_parse_empty_data_packet_smallest_block(self):
+        string = ''
+        packet = '\x00\x03\x00\x00' + string
+        assert (Packet.OPCODE_DATA, 0, '') == Packet.parse_data_packet(packet)
+
+    def test_parse_empty_data_packet_largest_block(self):
+        string = ''
+        packet = '\x00\x03\xff\xff' + string
+        assert (Packet.OPCODE_DATA, MAX_BLOCK_NUMBER, '') == Packet.parse_data_packet(packet)
+
+    def test_shortest_data_packet_smallest_block(self):
+        string = create_random_data_string(1)
+        packet = '\x00\x03\x00\x00' + string
+        assert (Packet.OPCODE_DATA, 0, string) == Packet.parse_data_packet(packet)
+
+    def test_shortest_data_packet_largest_block(self):
+        string = create_random_data_string(1)
+        packet = '\x00\x03\xff\xff' + string
+        assert (Packet.OPCODE_DATA, MAX_BLOCK_NUMBER, string) == Packet.parse_data_packet(packet)
+
+    def test_largest_data_packet_smallest_block(self):
+        string = create_random_data_string(MAX_DATA_SIZE)
+        packet = '\x00\x03\x00\x00' + string
+        assert (Packet.OPCODE_DATA, 0, string) == Packet.parse_data_packet(packet)
+
+    def test_largest_data_packet_largest_block(self):
+        string = create_random_data_string(MAX_DATA_SIZE)
+        packet = '\x00\x03\xff\xff' + string
+        assert (Packet.OPCODE_DATA, MAX_BLOCK_NUMBER, string) == Packet.parse_data_packet(packet)

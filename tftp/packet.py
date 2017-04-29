@@ -77,11 +77,34 @@ class Packet:
         # Is this assumption valid?
         return ''.join(format_string)
 
+    '''
+     2 bytes     2 bytes
+     ---------------------
+    | Opcode |   Block #  |
+     ---------------------
+     '''
     @staticmethod
     def parse_ack_packet(packet):
         # struct.unpack() returns a tuple.
         # The number of elements in the tuple matches the number of elements
         # in unpack's format string.
         format_string = Packet.__create_data_format_string()
-        block_tuple = struct.unpack(format_string, packet)
-        return block_tuple
+        return struct.unpack(format_string, packet)
+
+    '''
+    data packet structure:
+     2 bytes     2 bytes      n bytes
+     ----------------------------------
+    | Opcode |   Block #  |   Data     |
+     ----------------------------------
+    '''
+    @staticmethod
+    def parse_data_packet(packet):
+        # struct.unpack() returns a tuple.
+        # The number of elements in the tuple matches the number of elements
+        # in unpack's format string.
+        format_string = Packet.__create_data_format_string()
+        opcode_and_block = packet[0:4]
+        opcode, block_number = struct.unpack(format_string, opcode_and_block)
+        data = packet[4:]
+        return opcode, block_number, data

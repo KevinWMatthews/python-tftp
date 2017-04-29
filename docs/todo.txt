@@ -41,6 +41,8 @@ Should probably extract details on TFTP packets. They have their own standard, a
 
 Think about packing the data struct. Will the data be in string form?
 
+What really happens to element 4 in an empty data packet?
+
 
 
 Scripts:
