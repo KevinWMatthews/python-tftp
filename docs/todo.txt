@@ -37,6 +37,8 @@ Revise random string generator to include all bytes of data, not just printable 
 
 Tests: should create_packet() throw an exception if you pass it something that is not a string?
 
+Should probably extract details on TFTP packets. They have their own standard, and now I made their own tests!
+
 
 
 Scripts:
