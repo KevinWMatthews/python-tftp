@@ -15,16 +15,6 @@ MAX_BLOCK_NUMBER = 65535
 
 # Create various TFTP packets
 '''
-2 bytes     string    1 byte     string   1 byte
-------------------------------------------------
-| Opcode |  Filename  |   0  |    Mode    |   0  |
-------------------------------------------------
-'''
-def create_read_packet(filename):
-    return create_packet(OPCODE_READ, filename, OPCODE_NULL, 'octet', OPCODE_NULL)
-
-
-'''
 server response packet structure:
  2 bytes     2 bytes      n bytes
  ----------------------------------
@@ -63,7 +53,7 @@ class TestPacket:
         assert '\x00\x04\xff\xff' == Packet.create_ack_packet(MAX_BLOCK_NUMBER)
 
     def test_read_packet_shortest_filename(self):
-        assert '\x00\x01a\x00octet\x00' == create_read_packet('a')
+        assert '\x00\x01a\x00octet\x00' == Packet.create_read_packet('a')
 
     def test_empty_data_packet_smallest_block(self):
         string = create_random_data_string(0)
