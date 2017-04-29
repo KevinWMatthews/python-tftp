@@ -10,7 +10,7 @@ def create_random_data_string(n_bytes):
     random_chars = (choice(printable) for i in range(n_bytes))
     return ''.join(random_chars)
 
-class TestPacket:
+class TestPacketCreate:
     def test_ack_packet_smallest_block_number(self):
         assert '\x00\x04\x00\x00' == Packet.create_ack_packet(0)
 
@@ -49,3 +49,12 @@ class TestPacket:
         string = create_random_data_string(MAX_DATA_SIZE)
         assert MAX_DATA_SIZE == len(string)
         assert '\x00\x03\xff\xff' + string == Packet.create_data_packet(MAX_BLOCK_NUMBER, string)
+
+class TestPacketParse:
+    def test_parse_ack_packet_with_smallest_block_number(self):
+        ack_packet = '\x00\x04\x00\x00'
+        assert (Packet.OPCODE_ACK, 0) == Packet.parse_ack_packet(ack_packet)
+
+    def test_parse_ack_packet_with_smallest_block_number(self):
+        ack_packet = '\x00\x04\xff\xff'
+        assert (Packet.OPCODE_ACK, MAX_BLOCK_NUMBER) == Packet.parse_ack_packet(ack_packet)

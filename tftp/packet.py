@@ -76,3 +76,12 @@ class Packet:
         # we'll just insist that the data is in string format and concatenate the strings.
         # Is this assumption valid?
         return ''.join(format_string)
+
+    @staticmethod
+    def parse_ack_packet(packet):
+        # struct.unpack() returns a tuple.
+        # The number of elements in the tuple matches the number of elements
+        # in unpack's format string.
+        format_string = Packet.__create_data_format_string()
+        block_tuple = struct.unpack(format_string, packet)
+        return block_tuple
