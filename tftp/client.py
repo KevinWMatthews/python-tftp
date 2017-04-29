@@ -52,27 +52,31 @@ class Client:
 
     def __create_read_packet(self, filename):
         format_string = self.__create_read_format_string(filename)
-        return struct.pack(format_string, OPCODE_READ, filename, 0, 'octet', 0)
+        return struct.pack(format_string, OPCODE_READ, filename, OPCODE_NULL, 'octet', OPCODE_NULL)
 
     def __create_ack_packet(self, block_number):
         format_string = self.__create_ack_format_string()
         return struct.pack(format_string, OPCODE_ACK, block_number)
 
     def __create_read_format_string(self, filename):
-        format_string = '!'             # Network (big endian)
-        format_string += 'H'            # opcode - two-byte unsigned short
-        format_string += str(len(filename))
-        format_string += 's'            # filename - string
-        format_string += 'B'            # null byte - one-byte unsigned char
-        format_string += '5s'           # mode - 'octet'
-        format_string += 'B'            # null byte - one-byte unsigned char
-        return format_string
+        format_string = [
+            '!',           # Network (big endian)
+            'H',           # opcode - two-byte unsigned short
+            str(len(filename)),
+            's',           # filename - string
+            'B',           # null byte - one-byte unsigned char
+            '5s',          # mode - 'octet'
+            'B',           # null byte - one-byte unsigned char
+        ]
+        return ''.join(format_string)
 
     def __create_ack_format_string(self):
-        format_string = '!'             # Network (big endian)
-        format_string += 'H'            # opcode - two-byte unsigned short
-        format_string += 'H'            # block number - two-byte unsigned short
-        return format_string
+        format_string = [
+            '!',           # Network (big endian)
+            'H',           # opcode - two-byte unsigned short
+            'H',           # block number - two-byte unsigned short
+        ]
+        return ''.join(format_string)
 
     def __parse_receive_packet(self, packet):
         '''
