@@ -18,7 +18,7 @@ class Client:
         self.socket = socket
 
     def read(self, filename, ip, port):
-        read_packet = self.__create_read_packet(filename)
+        read_packet = tftp.Packet.create_read_packet(filename)
         self.socket.sendto(read_packet, (ip, port))
 
         block_count = 0
@@ -49,22 +49,6 @@ class Client:
             if self.__received_stop_condition(data):
                 print 'Download successful!'
                 return True
-
-    def __create_read_packet(self, filename):
-        format_string = self.__create_read_format_string(filename)
-        return struct.pack(format_string, OPCODE_READ, filename, OPCODE_NULL, 'octet', OPCODE_NULL)
-
-    def __create_read_format_string(self, filename):
-        format_string = [
-            '!',           # Network (big endian)
-            'H',           # opcode - two-byte unsigned short
-            str(len(filename)),
-            's',           # filename - string
-            'B',           # null byte - one-byte unsigned char
-            '5s',          # mode - 'octet'
-            'B',           # null byte - one-byte unsigned char
-        ]
-        return ''.join(format_string)
 
     def __parse_receive_packet(self, packet):
         '''
