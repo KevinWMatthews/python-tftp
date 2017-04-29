@@ -5,7 +5,7 @@ class Packet:
     OPCODE_READ  = '\x00\x01'
     OPCODE_WRITE = '\x00\x02'
     OPCODE_DATA  = '\x00\x03'
-    OPCODE_ACK   = '\x00\x04'
+    OPCODE_ACK   = 4
 
     '''
      2 bytes     2 bytes
@@ -15,8 +15,17 @@ class Packet:
      '''
     @staticmethod
     def create_ack_packet(block_number):
-        block_string = Packet.__pack_block_number(block_number)
-        return Packet.__create_packet(Packet.OPCODE_ACK, block_string)
+        format_string = Packet.__create_ack_format_string()
+        return struct.pack(format_string, Packet.OPCODE_ACK, block_number)
+
+    @staticmethod
+    def __create_ack_format_string():
+        format_string = [
+            '!',           # Network (big endian)
+            'H',           # opcode - two-byte unsigned short
+            'H',           # block number - two-byte unsigned short
+        ]
+        return ''.join(format_string)
 
     '''
     2 bytes     string    1 byte     string   1 byte

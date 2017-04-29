@@ -1,5 +1,6 @@
 import struct
 from socket import timeout
+import tftp
 
 BYTE_OPCODE_NULL  = '\x00'
 BYTE_OPCODE_READ  = '\x00\x01'
@@ -11,7 +12,6 @@ OPCODE_NULL  = 0
 OPCODE_READ  = 1
 OPCODE_WRITE = 2
 OPCODE_DATA  = 3
-OPCODE_ACK   = 4
 
 class Client:
     def __init__(self, socket):
@@ -44,7 +44,7 @@ class Client:
                 return False
 
             # print 'Sending ack response to block number %d' % block_count
-            ack_packet = self.__create_ack_packet(block_number)
+            ack_packet = tftp.Packet.create_ack_packet(block_number)
             self.socket.sendto(ack_packet, (server_ip, tid))
             if self.__received_stop_condition(data):
                 print 'Download successful!'
@@ -53,10 +53,6 @@ class Client:
     def __create_read_packet(self, filename):
         format_string = self.__create_read_format_string(filename)
         return struct.pack(format_string, OPCODE_READ, filename, OPCODE_NULL, 'octet', OPCODE_NULL)
-
-    def __create_ack_packet(self, block_number):
-        format_string = self.__create_ack_format_string()
-        return struct.pack(format_string, OPCODE_ACK, block_number)
 
     def __create_read_format_string(self, filename):
         format_string = [
@@ -67,14 +63,6 @@ class Client:
             'B',           # null byte - one-byte unsigned char
             '5s',          # mode - 'octet'
             'B',           # null byte - one-byte unsigned char
-        ]
-        return ''.join(format_string)
-
-    def __create_ack_format_string(self):
-        format_string = [
-            '!',           # Network (big endian)
-            'H',           # opcode - two-byte unsigned short
-            'H',           # block number - two-byte unsigned short
         ]
         return ''.join(format_string)
 
