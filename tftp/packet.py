@@ -1,9 +1,11 @@
 import struct
 
 class Packet:
-    OPCODE_NULL = '\x00'
-    OPCODE_ACK  = '\x00\x04'
-    OPCODE_READ = '\x00\x01'
+    OPCODE_NULL  = '\x00'
+    OPCODE_READ  = '\x00\x01'
+    OPCODE_WRITE = '\x00\x02'
+    OPCODE_DATA  = '\x00\x03'
+    OPCODE_ACK   = '\x00\x04'
 
     '''
      2 bytes     2 bytes
@@ -25,6 +27,18 @@ class Packet:
     @staticmethod
     def create_read_packet(filename):
         return Packet.__create_packet(Packet.OPCODE_READ, filename, Packet.OPCODE_NULL, 'octet', Packet.OPCODE_NULL)
+
+    '''
+    server response packet structure:
+     2 bytes     2 bytes      n bytes
+     ----------------------------------
+    | Opcode |   Block #  |   Data     |
+     ----------------------------------
+    '''
+    @staticmethod
+    def create_data_response(block_number, data):
+        block_string = Packet.__pack_block_number(block_number)
+        return Packet.__create_packet(Packet.OPCODE_DATA, block_string, data)
 
     @staticmethod
     def __pack_block_number(block_number):
