@@ -1,3 +1,8 @@
+Refactor initiating the read from the server in Client.py
+This takes too many arguments! What can we do?
+def __initiate_read_from_server(self, socket, ip, port, filename, mode):
+Hmmm.
+
 Add server retries to test list.
 
 For block number failure in client read:
