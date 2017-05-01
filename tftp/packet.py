@@ -49,10 +49,6 @@ class PacketFactory:
         elif opcode == PacketFactory.OPCODE_DATA:
             return DataPacket(block_number, payload)
 
-    @staticmethod
-    def factory(opcode, block_number):
-        return AckPacket(block_number)
-
     '''
      2 bytes     2 bytes
      ---------------------

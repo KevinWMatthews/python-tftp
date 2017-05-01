@@ -1,4 +1,4 @@
-from tftp import Packet, PacketFactory
+from tftp import Packet, AckPacket, PacketFactory
 import pytest
 
 from random import choice
@@ -17,12 +17,12 @@ def create_random_data_string(n_bytes):
 class TestPacketCreate:
     def test_ack_packet_smallest_block_number(self):
         block_number = 0
-        packet = PacketFactory.factory(OPCODE_ACK, block_number)
+        packet = AckPacket(block_number)
         assert '\x00\x04\x00\x00' == packet.to_string()
 
     def test_ack_packet_largest_block_number(self):
         block_number = MAX_BLOCK_NUMBER
-        packet = PacketFactory.factory(OPCODE_ACK, block_number)
+        packet = AckPacket(block_number)
         assert '\x00\x04\xff\xff' == packet.to_string()
 
     def test_read_packet_shortest_filename(self):
