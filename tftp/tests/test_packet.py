@@ -18,24 +18,24 @@ class TestPacketCreate:
     def test_ack_packet_smallest_block_number(self):
         block_number = 0
         packet = AckPacket(block_number)
-        assert '\x00\x04\x00\x00' == packet.to_string()
+        assert '\x00\x04\x00\x00' == packet.network_string()
 
     def test_ack_packet_largest_block_number(self):
         block_number = MAX_BLOCK_NUMBER
         packet = AckPacket(block_number)
-        assert '\x00\x04\xff\xff' == packet.to_string()
+        assert '\x00\x04\xff\xff' == packet.network_string()
 
     def test_read_packet_shortest_filename(self):
         filename = 'a'
         mode = 'octet'
         packet = ReadPacket(filename, mode)
-        assert '\x00\x01a\x00octet\x00' == packet.to_string()
+        assert '\x00\x01a\x00octet\x00' == packet.network_string()
 
     def test_read_packet_longer_filename(self):
         filename = 'abcdefg'
         mode = 'octet'
         packet = ReadPacket(filename, mode)
-        assert '\x00\x01abcdefg\x00octet\x00' == packet.to_string()
+        assert '\x00\x01abcdefg\x00octet\x00' == packet.network_string()
 
     def test_empty_data_packet_smallest_block(self):
         string = create_random_data_string(0)

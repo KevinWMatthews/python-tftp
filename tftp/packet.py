@@ -12,7 +12,7 @@ class AckPacket:
         self.opcode = 4
         self.block_number = block_number
 
-    def to_string(self):
+    def network_string(self):
         format_string = self.__create_ack_format_string()
         return struct.pack(format_string, self.opcode, self.block_number)
 
@@ -50,7 +50,7 @@ class ReadPacket:
         self.filename = filename
         self.mode = mode
 
-    def to_string(self):
+    def network_string(self):
         format_string = self.__create_format_string()
         return struct.pack(format_string, 1, self.filename, 0, self.mode, 0)
 
