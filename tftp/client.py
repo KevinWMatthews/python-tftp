@@ -44,8 +44,9 @@ class Client:
                 return False
 
             # print 'Sending ack response to block number %d' % block_count
-            ack_packet = tftp.Packet.create_ack_packet(block_number)
-            self.socket.sendto(ack_packet, (server_ip, tid))
+            ack_packet = tftp.AckPacket(block_number)
+            ack_string = ack_packet.to_string()
+            self.socket.sendto(ack_string, (server_ip, tid))
             if self.__received_stop_condition(data):
                 print 'Download successful!'
                 return True
