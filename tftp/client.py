@@ -25,7 +25,8 @@ class Client:
             self.__send_ack_response(packet.block_number, server_ip, tid)
 
             if packet.is_stop_condition():
-                print 'Download successful!'
+                print 'Stop condition received.'
+                print 'Ending transfer!'
                 return True
 
     def __get_server_response(self, socket, buffer_size):
