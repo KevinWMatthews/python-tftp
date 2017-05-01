@@ -16,15 +16,10 @@ class Client:
             (packet, server_ip, tid) = self.__get_server_response(self.socket, 517)
             block_count += 1
 
-            if not packet.OPCODE == tftp.DataPacket.OPCODE:
-                print 'Received wrong opcode!'
+            if not self.__is_valid_data_packet(packet, block_count):
+                print 'Client received invalid response from server.'
+                print 'Aborting transfer!'
                 return False
-
-            if not packet.block_number == block_count:
-                print 'Received invalid block number!'
-                return False
-
-            # TFTP protocol imposes no restrictions on data (that I know of).
 
             # print 'Sending ack response to block number %d' % block_count
             self.__send_ack_response(packet.block_number, server_ip, tid)
@@ -46,6 +41,17 @@ class Client:
         packet = tftp.PacketParser.parse(received)
 
         return (packet, server_ip, tid)
+
+    def __is_valid_data_packet(self, packet, block_count):
+        if not packet.OPCODE == tftp.DataPacket.OPCODE:
+            print 'Received wrong opcode!'
+            return False
+        if not packet.block_number == block_count:
+            print 'Received invalid block number!'
+            return False
+        # TFTP protocol imposes no restrictions on the actual data content (that I know of).
+
+        return True
 
     def __send_ack_response(self, block_number, server_ip, tid):
         ack_packet = tftp.AckPacket(block_number)
