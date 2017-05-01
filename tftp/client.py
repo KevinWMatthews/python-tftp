@@ -36,9 +36,13 @@ class Client:
             # TFTP protocol imposes no restrictions on data (that I know of).
 
             # print 'Sending ack response to block number %d' % block_count
-            ack_packet = tftp.AckPacket(packet.block_number)
-            ack_string = ack_packet.network_string()
-            self.socket.sendto(ack_string, (server_ip, tid))
+            self.__send_ack_response(packet.block_number, server_ip, tid)
+
             if packet.is_stop_condition():
                 print 'Download successful!'
                 return True
+
+    def __send_ack_response(self, block_number, server_ip, tid):
+        ack_packet = tftp.AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        self.socket.sendto(ack_string, (server_ip, tid))
