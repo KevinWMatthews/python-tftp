@@ -18,8 +18,9 @@ class Client:
         self.socket = socket
 
     def read(self, filename, ip, port):
-        read_packet = tftp.Packet.create_read_packet(filename)
-        self.socket.sendto(read_packet, (ip, port))
+        read_packet = tftp.ReadPacket(filename, 'octet')
+        read_string = read_packet.network_string()
+        self.socket.sendto(read_string, (ip, port))
 
         block_count = 0
         while True:
