@@ -37,6 +37,35 @@ class DataPacket:
         self.block_number = block_number
         self.data = payload
 
+'''
+read request packet
+2 bytes     string    1 byte     string   1 byte
+ ------------------------------------------------
+| Opcode |  Filename  |   0  |    Mode    |   0  |
+ ------------------------------------------------
+opcode = 1
+'''
+class ReadPacket:
+    def __init__(self, filename, mode):
+        self.filename = filename
+        self.mode = mode
+
+    def to_string(self):
+        format_string = self.__create_format_string()
+        return struct.pack(format_string, 1, self.filename, 0, self.mode, 0)
+
+    def __create_format_string(self):
+        format_string = [
+            '!',           # Network (big endian)
+            'H',           # opcode - two-byte unsigned short
+            str(len(self.filename)),
+            's',           # filename - string
+            'B',           # null byte - one-byte unsigned char
+            '5s',          # mode - 'octet'
+            'B',           # null byte - one-byte unsigned char
+        ]
+        return ''.join(format_string)
+
 class PacketFactory:
     OPCODE_DATA  = 3
     OPCODE_ACK   = 4
