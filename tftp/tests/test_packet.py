@@ -21,7 +21,9 @@ class TestPacketCreate:
         assert '\x00\x04\x00\x00' == packet.to_string()
 
     def test_ack_packet_largest_block_number(self):
-        assert '\x00\x04\xff\xff' == Packet.create_ack_packet(MAX_BLOCK_NUMBER)
+        block_number = MAX_BLOCK_NUMBER
+        packet = PacketFactory.factory(OPCODE_ACK, block_number)
+        assert '\x00\x04\xff\xff' == packet.to_string()
 
     def test_read_packet_shortest_filename(self):
         assert '\x00\x01a\x00octet\x00' == Packet.create_read_packet('a')
