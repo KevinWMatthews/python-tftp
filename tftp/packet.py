@@ -96,6 +96,18 @@ class ReadPacket:
         ]
         return ''.join(format_string)
 
+'''
+Not in the TFTP RFC.
+Implemented so the PacketParser can return an object that
+behaves like a packet but signals that it is not a valid packet.
+OPCODE = 0
+'''
+class InvalidPacket:
+    OPCODE = 0
+
+    def __init__(self):
+        pass
+
 class PacketParser:
     @staticmethod
     def parse(received):
@@ -104,6 +116,8 @@ class PacketParser:
             return AckPacket(block_number)
         elif opcode == DataPacket.OPCODE:
             return DataPacket(block_number, payload)
+        else:
+            return InvalidPacket()
 
     '''
      2 bytes     2 bytes

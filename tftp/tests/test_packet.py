@@ -1,4 +1,4 @@
-from tftp import AckPacket, ReadPacket, DataPacket, PacketParser
+from tftp import AckPacket, ReadPacket, DataPacket, InvalidPacket, PacketParser
 import pytest
 
 from random import choice
@@ -7,6 +7,7 @@ from string import printable
 MAX_DATA_SIZE = 512
 MAX_BLOCK_NUMBER = 65535
 
+OPCODE_INVALID = 0
 OPCODE_DATA  = 3
 OPCODE_ACK   = 4
 
@@ -91,7 +92,17 @@ class TestDataPacket:
         packet = DataPacket(block_number, string)
         assert not packet.is_stop_condition()
 
+class TestInvalidPacket:
+    def test_invalid_packet_has_opcode(self):
+        packet = InvalidPacket()
+        assert OPCODE_INVALID == packet.OPCODE
+
 class TestPacketParse:
+    def test_parse_invalid_packet(self):
+        received = '\x00\x00\x00\x00'   # Has invalid OPCODE
+        packet = PacketParser.parse(received)
+        assert OPCODE_INVALID == packet.OPCODE
+
     def test_parse_ack_packet_with_smallest_block_number(self):
         received = '\x00\x04\x00\x00'
         packet = PacketParser.parse(received)

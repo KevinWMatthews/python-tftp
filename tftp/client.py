@@ -35,7 +35,6 @@ class Client:
 
             block_count += 1
             packet = tftp.PacketParser.parse(received)
-            #TODO sanity check on packet. How will parse fail?
 
             if not packet.OPCODE == tftp.DataPacket.OPCODE:
                 print 'Received wrong opcode!'
