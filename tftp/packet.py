@@ -90,10 +90,10 @@ class ReadPacket:
         ]
         return ''.join(format_string)
 
-class PacketFactory:
+class PacketParser:
     @staticmethod
     def parse(received):
-        (opcode, block_number, payload) = PacketFactory.__split_packet(received)
+        (opcode, block_number, payload) = PacketParser.__split_packet(received)
         if opcode == AckPacket.OPCODE:
             return AckPacket(block_number)
         elif opcode == DataPacket.OPCODE:
@@ -107,7 +107,7 @@ class PacketFactory:
      '''
     @staticmethod
     def __split_packet(received):
-        format_string = PacketFactory.__create_format_string()
+        format_string = PacketParser.__create_format_string()
         opcode_and_block = received[0:4]
         opcode, block_number = struct.unpack(format_string, opcode_and_block)
         payload = received[4:]
