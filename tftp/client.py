@@ -13,17 +13,8 @@ class Client:
 
         block_count = 0
         while True:
-            try:
-                # This returns two tuples, nested:
-                #   (packet, (ip, port))
-                # The Transmission ID is the response port that the server chooses.
-                received, (server_ip, tid) = self.socket.recvfrom(517)
-            except timeout, msg:
-                print 'Failed to receive from server: %s' % msg
-                return False
-
+            (packet, server_ip, tid) = self.__get_server_response(self.socket, 517)
             block_count += 1
-            packet = tftp.PacketParser.parse(received)
 
             if not packet.OPCODE == tftp.DataPacket.OPCODE:
                 print 'Received wrong opcode!'
@@ -41,6 +32,20 @@ class Client:
             if packet.is_stop_condition():
                 print 'Download successful!'
                 return True
+
+    def __get_server_response(self, socket, buffer_size):
+        try:
+            # This returns two tuples, nested:
+            #   (packet, (ip, port))
+            # The Transmission ID is the response port that the server chooses.
+            received, (server_ip, tid) = self.socket.recvfrom(buffer_size)
+        except timeout, msg:
+            print 'Failed to receive from server: %s' % msg
+            return (tftp.InvalidPacket(), '', 0)
+
+        packet = tftp.PacketParser.parse(received)
+
+        return (packet, server_ip, tid)
 
     def __send_ack_response(self, block_number, server_ip, tid):
         ack_packet = tftp.AckPacket(block_number)
