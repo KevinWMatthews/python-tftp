@@ -1,7 +1,13 @@
+I've hard-coded self.socket in Client's helper methods. This is find for now (forever?).
+
 Refactor initiating the read from the server in Client.py
 This takes too many arguments! What can we do?
 def __initiate_read_from_server(self, socket, ip, port, filename, mode):
 Hmmm.
+
+mode should not be hard-coded?
+
+Add a check to see if we've received too much data?
 
 Add server retries to test list.
 

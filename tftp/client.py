@@ -10,9 +10,10 @@ class Client:
         mode = 'octet'
         self.__initiate_read_from_server(filename, mode, ip, port)
 
+        buffer_size = 517
         block_count = 0
         while True:
-            (packet, server_ip, tid) = self.__get_server_response(self.socket, 517)
+            (packet, server_ip, tid) = self.__get_server_response(buffer_size)
             block_count += 1
 
             if not self.__is_valid_data_packet(packet, block_count):
@@ -33,7 +34,7 @@ class Client:
         read_string = read_packet.network_string()
         self.socket.sendto(read_string, (ip, port))
 
-    def __get_server_response(self, socket, buffer_size):
+    def __get_server_response(self, buffer_size):
         try:
             # This returns two tuples, nested:
             #   (packet, (ip, port))
