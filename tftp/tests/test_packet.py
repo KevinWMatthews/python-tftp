@@ -14,7 +14,7 @@ def create_random_data_string(n_bytes):
     random_chars = (choice(printable) for i in range(n_bytes))
     return ''.join(random_chars)
 
-class TestPacketCreate:
+class TestAckPacket:
     def test_ack_packet_smallest_block_number(self):
         block_number = 0
         packet = AckPacket(block_number)
@@ -25,6 +25,7 @@ class TestPacketCreate:
         packet = AckPacket(block_number)
         assert '\x00\x04\xff\xff' == packet.network_string()
 
+class TestReadPacket:
     def test_read_packet_shortest_filename(self):
         filename = 'a'
         mode = 'octet'
@@ -37,6 +38,7 @@ class TestPacketCreate:
         packet = ReadPacket(filename, mode)
         assert '\x00\x01abcdefg\x00octet\x00' == packet.network_string()
 
+class TestDataPacket:
     def test_empty_data_packet_smallest_block(self):
         block_number = 0
         string = create_random_data_string(0)
