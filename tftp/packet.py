@@ -1,17 +1,27 @@
 import struct
 
 class AckPacket:
-    def __init__(self, block_number):
+    def __init__(self, opcode, block_number):
+        self.opcode = opcode
         self.block_number = block_number
 
-    def opcode(self):
-        return 4
+class DataPacket:
+    def __init__(self, opcode, block_number, payload):
+        self.opcode = opcode
+        self.block_number = block_number
+        self.data = payload
 
 class PacketFactory:
+    OPCODE_DATA  = 3
+    OPCODE_ACK   = 4
+
     @staticmethod
     def parse(received):
-        (opcode, block_number) = PacketFactory.__get_opcode_and_block_number(received)
-        return AckPacket(block_number)
+        (opcode, block_number, payload) = PacketFactory.__split_packet(received)
+        if opcode == PacketFactory.OPCODE_ACK:
+            return AckPacket(opcode, block_number)
+        elif opcode == PacketFactory.OPCODE_DATA:
+            return DataPacket(opcode, block_number, payload)
 
     '''
      2 bytes     2 bytes
@@ -20,9 +30,12 @@ class PacketFactory:
      ---------------------
      '''
     @staticmethod
-    def __get_opcode_and_block_number(received):
+    def __split_packet(received):
         format_string = PacketFactory.__create_format_string()
-        return struct.unpack(format_string, received)
+        opcode_and_block = received[0:4]
+        opcode, block_number = struct.unpack(format_string, opcode_and_block)
+        payload = received[4:]
+        return opcode, block_number, payload
 
     @staticmethod
     def __create_format_string():

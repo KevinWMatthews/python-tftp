@@ -7,6 +7,7 @@ from string import printable
 MAX_DATA_SIZE = 512
 MAX_BLOCK_NUMBER = 65535
 
+OPCODE_DATA  = 3
 OPCODE_ACK   = 4
 
 def create_random_data_string(n_bytes):
@@ -57,43 +58,61 @@ class TestPacketParse:
     def test_parse_ack_packet_with_smallest_block_number(self):
         received = '\x00\x04\x00\x00'
         packet = PacketFactory.parse(received)
-        assert OPCODE_ACK == packet.opcode()
+        assert OPCODE_ACK == packet.opcode
         assert 0 == packet.block_number
 
     def test_parse_ack_packet_with_largest_block_number(self):
         received = '\x00\x04\xff\xff'
         packet = PacketFactory.parse(received)
-        assert OPCODE_ACK == packet.opcode()
-        assert 65535 == packet.block_number
+        assert OPCODE_ACK == packet.opcode
+        assert MAX_BLOCK_NUMBER == packet.block_number
 
         #  assert (Packet.OPCODE_ACK, MAX_BLOCK_NUMBER) == Packet.parse_ack_packet(packet)
 
-    def test_parse_empty_data_packet_smallest_block(self):
+    def test_parse_empty_data_packet_smallest_block_number(self):
         string = ''
-        packet = '\x00\x03\x00\x00' + string
-        assert (Packet.OPCODE_DATA, 0, '') == Packet.parse_data_packet(packet)
+        received = '\x00\x03\x00\x00' + string
+        packet = PacketFactory.parse(received)
+        assert OPCODE_DATA == packet.opcode
+        assert 0 == packet.block_number
+        assert string == packet.data
 
-    def test_parse_empty_data_packet_largest_block(self):
+    def test_parse_empty_data_packet_largest_block_number(self):
         string = ''
-        packet = '\x00\x03\xff\xff' + string
-        assert (Packet.OPCODE_DATA, MAX_BLOCK_NUMBER, '') == Packet.parse_data_packet(packet)
+        received = '\x00\x03\xff\xff' + string
+        packet = PacketFactory.parse(received)
+        assert OPCODE_DATA == packet.opcode
+        assert MAX_BLOCK_NUMBER == packet.block_number
+        assert string == packet.data
 
     def test_shortest_data_packet_smallest_block(self):
         string = create_random_data_string(1)
-        packet = '\x00\x03\x00\x00' + string
-        assert (Packet.OPCODE_DATA, 0, string) == Packet.parse_data_packet(packet)
+        received = '\x00\x03\x00\x00' + string
+        packet = PacketFactory.parse(received)
+        assert OPCODE_DATA == packet.opcode
+        assert 0 == packet.block_number
+        assert string == packet.data
 
     def test_shortest_data_packet_largest_block(self):
         string = create_random_data_string(1)
-        packet = '\x00\x03\xff\xff' + string
-        assert (Packet.OPCODE_DATA, MAX_BLOCK_NUMBER, string) == Packet.parse_data_packet(packet)
+        received = '\x00\x03\xff\xff' + string
+        packet = PacketFactory.parse(received)
+        assert OPCODE_DATA == packet.opcode
+        assert MAX_BLOCK_NUMBER == packet.block_number
+        assert string == packet.data
 
     def test_largest_data_packet_smallest_block(self):
         string = create_random_data_string(MAX_DATA_SIZE)
-        packet = '\x00\x03\x00\x00' + string
-        assert (Packet.OPCODE_DATA, 0, string) == Packet.parse_data_packet(packet)
+        received = '\x00\x03\x00\x00' + string
+        packet = PacketFactory.parse(received)
+        assert OPCODE_DATA == packet.opcode
+        assert 0 == packet.block_number
+        assert string == packet.data
 
     def test_largest_data_packet_largest_block(self):
         string = create_random_data_string(MAX_DATA_SIZE)
-        packet = '\x00\x03\xff\xff' + string
-        assert (Packet.OPCODE_DATA, MAX_BLOCK_NUMBER, string) == Packet.parse_data_packet(packet)
+        received = '\x00\x03\xff\xff' + string
+        packet = PacketFactory.parse(received)
+        assert OPCODE_DATA == packet.opcode
+        assert MAX_BLOCK_NUMBER == packet.block_number
+        assert string == packet.data
