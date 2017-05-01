@@ -1,4 +1,4 @@
-from tftp import Packet, AckPacket, ReadPacket, DataPacket, PacketFactory
+from tftp import AckPacket, ReadPacket, DataPacket, PacketFactory
 import pytest
 
 from random import choice
@@ -85,8 +85,6 @@ class TestPacketParse:
         packet = PacketFactory.parse(received)
         assert OPCODE_ACK == packet.opcode
         assert MAX_BLOCK_NUMBER == packet.block_number
-
-        #  assert (Packet.OPCODE_ACK, MAX_BLOCK_NUMBER) == Packet.parse_ack_packet(packet)
 
     def test_parse_empty_data_packet_smallest_block_number(self):
         string = ''
