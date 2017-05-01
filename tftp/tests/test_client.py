@@ -175,7 +175,7 @@ class TestClient:
         read_request_args = create_socket_tuple(packet, server_ip, server_port)
 
         # Server response
-        opcode = OPCODE_NULL            # Should be OPCODE_DATA
+        opcode = OPCODE_ACK                 # Should be OPCODE_DATA
         block_number = pack_block_number(1)
         data = create_random_data_string(1)
         data_packet = OPCODE_WRITE + block_number + data
@@ -431,7 +431,7 @@ class TestClient:
         ack_packet_args = create_socket_tuple(packet, server_ip, tid)
 
         # Server response - wrong block number
-        opcode = OPCODE_NULL            # Should be OPCODE_DATA
+        opcode = OPCODE_ACK                 # Should be OPCODE_DATA
         block_number = pack_block_number(2)
         data = create_random_data_string(1)
         packet = create_packet(opcode, block_number, data)

@@ -34,37 +34,26 @@ class Client:
                 return False
 
             block_count += 1
-            opcode, block_number, data = self.__parse_receive_packet(receive_packet)
+            packet = tftp.PacketParser.parse(receive_packet)
+            #TODO sanity check on packet. How will parse fail?
 
-            if not opcode == BYTE_OPCODE_DATA:
+            if not packet.OPCODE == tftp.DataPacket.OPCODE:
                 print 'Received wrong opcode!'
                 return False
 
-            if not block_number == block_count:
+            if not packet.block_number == block_count:
                 print 'Received invalid block number!'
                 return False
 
+            # TFTP protocol imposes no restrictions on data (that I know of).
+
             # print 'Sending ack response to block number %d' % block_count
-            ack_packet = tftp.AckPacket(block_number)
+            ack_packet = tftp.AckPacket(packet.block_number)
             ack_string = ack_packet.network_string()
             self.socket.sendto(ack_string, (server_ip, tid))
-            if self.__received_stop_condition(data):
+            if self.__received_stop_condition(packet.data):
                 print 'Download successful!'
                 return True
-
-    def __parse_receive_packet(self, packet):
-        '''
-        server response packet structure:
-         2 bytes     2 bytes      n bytes
-         ----------------------------------
-        | Opcode |   Block #  |   Data     |
-         ----------------------------------
-        '''
-        opcode = packet[0] + packet[1]
-        block_bytes = packet[2] + packet[3]
-        block_number = self.__unpack_block_number(block_bytes)
-        data = packet[4:]
-        return opcode, block_number, data
 
     def __received_stop_condition(self, data):
         length = len(data)
@@ -76,12 +65,3 @@ class Client:
             return True
         elif length == 512:
             return False
-
-    def __unpack_block_number(self, string):
-        # unpack() returns a tuple.
-        # The number of elements in the tuple matches the number of elements
-        # in unpack's format string.
-        format_string = '!'             # Network (big endian)
-        format_string += 'H'            # block number - two-byte unsigned short
-        block_tuple = struct.unpack(format_string, string)
-        return block_tuple[0]
