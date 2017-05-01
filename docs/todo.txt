@@ -20,6 +20,8 @@ Can we import the opcodes from the class?
 
 Do we need to sanitize the data portion of the packet in client.read()? For example, do we send an ack if we receive a packet that is < 512K? I'm pretty sure.
 
+Deal with debug statements and levels.
+
 __parse_response_packet() probably needs a try statement.
 Should we move input sanitation into __parse_response_packet()? We can't because we won't always expect the same opcode or block number.
 *** If input sanitation fails, do we send a response to the server?
