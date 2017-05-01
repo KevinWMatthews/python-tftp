@@ -1,4 +1,4 @@
-from tftp import Packet, AckPacket, ReadPacket, PacketFactory
+from tftp import Packet, AckPacket, ReadPacket, DataPacket, PacketFactory
 import pytest
 
 from random import choice
@@ -38,34 +38,40 @@ class TestPacketCreate:
         assert '\x00\x01abcdefg\x00octet\x00' == packet.network_string()
 
     def test_empty_data_packet_smallest_block(self):
+        block_number = 0
         string = create_random_data_string(0)
-        assert 0 == len(string)
-        assert '\x00\x03\x00\x00' + string == Packet.create_data_packet(0, string)
+        packet = DataPacket(block_number, string)
+        assert '\x00\x03\x00\x00' + string == packet.network_string()
 
     def test_empty_data_packet_largest_block(self):
+        block_number = MAX_BLOCK_NUMBER
         string = create_random_data_string(0)
-        assert 0 == len(string)
-        assert '\x00\x03\xff\xff' == Packet.create_data_packet(MAX_BLOCK_NUMBER, string)
+        packet = DataPacket(block_number, string)
+        assert '\x00\x03\xff\xff' == packet.network_string()
 
     def test_shortest_data_packet_smallest_block(self):
+        block_number = 0
         string = create_random_data_string(1)
-        assert 1 == len(string)
-        assert '\x00\x03\x00\x00' + string == Packet.create_data_packet(0, string)
+        packet = DataPacket(block_number, string)
+        assert '\x00\x03\x00\x00' + string == packet.network_string()
 
     def test_shortest_data_packet_largest_block(self):
+        block_number = MAX_BLOCK_NUMBER
         string = create_random_data_string(1)
-        assert 1 == len(string)
-        assert '\x00\x03\xff\xff' + string == Packet.create_data_packet(MAX_BLOCK_NUMBER, string)
+        packet = DataPacket(block_number, string)
+        assert '\x00\x03\xff\xff' + string == packet.network_string()
 
     def test_largest_data_packet_smallest_block(self):
+        block_number = 0
         string = create_random_data_string(MAX_DATA_SIZE)
-        assert MAX_DATA_SIZE == len(string)
-        assert '\x00\x03\x00\x00' + string == Packet.create_data_packet(0, string)
+        packet = DataPacket(block_number, string)
+        assert '\x00\x03\x00\x00' + string == packet.network_string()
 
     def test_largest_data_packet_largest_block(self):
+        block_number = MAX_BLOCK_NUMBER
         string = create_random_data_string(MAX_DATA_SIZE)
-        assert MAX_DATA_SIZE == len(string)
-        assert '\x00\x03\xff\xff' + string == Packet.create_data_packet(MAX_BLOCK_NUMBER, string)
+        packet = DataPacket(block_number, string)
+        assert '\x00\x03\xff\xff' + string == packet.network_string()
 
 class TestPacketParse:
     def test_parse_ack_packet_with_smallest_block_number(self):

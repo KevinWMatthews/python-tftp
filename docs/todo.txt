@@ -23,6 +23,10 @@ Add test case for when the data field is exactly 512 bytes. In this case the ser
 
 Add rollover test cases: 511 bytes, 512 bytes, 513 bytes?
 
+DataPacket, format_string(),
+    # Rather than trying to pack a variable amount of data into the struct,
+    # we'll just insist that the data is in string format and concatenate the strings.
+    # Is this assumption valid?
 
 Misc:
 
