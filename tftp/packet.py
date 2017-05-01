@@ -8,13 +8,14 @@ import struct
 Opcode = 4
  '''
 class AckPacket:
+    OPCODE = 4
+
     def __init__(self, block_number):
-        self.opcode = 4
         self.block_number = block_number
 
     def network_string(self):
         format_string = self.__create_ack_format_string()
-        return struct.pack(format_string, self.opcode, self.block_number)
+        return struct.pack(format_string, self.OPCODE, self.block_number)
 
     def __create_ack_format_string(self):
         format_string = [
@@ -32,14 +33,15 @@ class AckPacket:
 Opcode = 3
 '''
 class DataPacket:
+    OPCODE = 3
+
     def __init__(self, block_number, payload):
-        self.opcode = 3
         self.block_number = block_number
         self.data = payload
 
     def network_string(self):
         format_string = self.__create_format_string()
-        opcode_and_block = struct.pack(format_string, 3, self.block_number)
+        opcode_and_block = struct.pack(format_string, self.OPCODE, self.block_number)
         return opcode_and_block + self.data
 
     @staticmethod
@@ -64,13 +66,15 @@ read request packet
 opcode = 1
 '''
 class ReadPacket:
+    OPCODE = 1
+
     def __init__(self, filename, mode):
         self.filename = filename
         self.mode = mode
 
     def network_string(self):
         format_string = self.__create_format_string()
-        return struct.pack(format_string, 1, self.filename, 0, self.mode, 0)
+        return struct.pack(format_string, self.OPCODE, self.filename, 0, self.mode, 0)
 
     def __create_format_string(self):
         format_string = [
@@ -85,15 +89,12 @@ class ReadPacket:
         return ''.join(format_string)
 
 class PacketFactory:
-    OPCODE_DATA  = 3
-    OPCODE_ACK   = 4
-
     @staticmethod
     def parse(received):
         (opcode, block_number, payload) = PacketFactory.__split_packet(received)
-        if opcode == PacketFactory.OPCODE_ACK:
+        if opcode == AckPacket.OPCODE:
             return AckPacket(block_number)
-        elif opcode == PacketFactory.OPCODE_DATA:
+        elif opcode == DataPacket.OPCODE:
             return DataPacket(block_number, payload)
 
     '''
