@@ -31,6 +31,7 @@ class AckPacket:
 | Opcode |   Block #  |   Data     |
  ----------------------------------
 Opcode = 3
+Data may be from 0 to 512 bytes.
 '''
 class DataPacket:
     OPCODE = 3
@@ -64,6 +65,7 @@ read request packet
 | Opcode |  Filename  |   0  |    Mode    |   0  |
  ------------------------------------------------
 opcode = 1
+mode may be octet, netascii, or mail
 '''
 class ReadPacket:
     OPCODE = 1
