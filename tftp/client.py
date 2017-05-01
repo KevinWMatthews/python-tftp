@@ -7,9 +7,8 @@ class Client:
         self.socket = socket
 
     def read(self, filename, ip, port):
-        read_packet = tftp.ReadPacket(filename, 'octet')
-        read_string = read_packet.network_string()
-        self.socket.sendto(read_string, (ip, port))
+        mode = 'octet'
+        self.__initiate_read_from_server(filename, mode, ip, port)
 
         block_count = 0
         while True:
@@ -28,6 +27,11 @@ class Client:
                 print 'Stop condition received.'
                 print 'Ending transfer!'
                 return True
+
+    def __initiate_read_from_server(self, filename, mode, ip, port):
+        read_packet = tftp.ReadPacket(filename, mode)
+        read_string = read_packet.network_string()
+        self.socket.sendto(read_string, (ip, port))
 
     def __get_server_response(self, socket, buffer_size):
         try:
