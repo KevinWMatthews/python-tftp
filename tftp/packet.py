@@ -1,9 +1,29 @@
 import struct
 
+'''
+ 2 bytes     2 bytes
+ ---------------------
+| Opcode |   Block #  |
+ ---------------------
+Opcode = 3
+ '''
 class AckPacket:
     def __init__(self, opcode, block_number):
         self.opcode = opcode
         self.block_number = block_number
+
+    def to_string(self):
+        format_string = self.__create_ack_format_string()
+        return struct.pack(format_string, self.opcode, self.block_number)
+
+    def __create_ack_format_string(self):
+        format_string = [
+            '!',           # Network (big endian)
+            'H',           # opcode - two-byte unsigned short
+            'H',           # block number - two-byte unsigned short
+        ]
+        return ''.join(format_string)
+
 
 class DataPacket:
     def __init__(self, opcode, block_number, payload):
@@ -22,6 +42,10 @@ class PacketFactory:
             return AckPacket(opcode, block_number)
         elif opcode == PacketFactory.OPCODE_DATA:
             return DataPacket(opcode, block_number, payload)
+
+    @staticmethod
+    def factory(opcode, block_number):
+        return AckPacket(opcode, block_number)
 
     '''
      2 bytes     2 bytes

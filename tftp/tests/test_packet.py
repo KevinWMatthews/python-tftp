@@ -16,7 +16,9 @@ def create_random_data_string(n_bytes):
 
 class TestPacketCreate:
     def test_ack_packet_smallest_block_number(self):
-        assert '\x00\x04\x00\x00' == Packet.create_ack_packet(0)
+        block_number = 0
+        packet = PacketFactory.factory(OPCODE_ACK, block_number)
+        assert '\x00\x04\x00\x00' == packet.to_string()
 
     def test_ack_packet_largest_block_number(self):
         assert '\x00\x04\xff\xff' == Packet.create_ack_packet(MAX_BLOCK_NUMBER)
