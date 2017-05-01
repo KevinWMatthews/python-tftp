@@ -32,6 +32,7 @@ class AckPacket:
  ----------------------------------
 Opcode = 3
 Data may be from 0 to 512 bytes.
+Data != 512 bytes signals a stop condition.
 '''
 class DataPacket:
     OPCODE = 3
@@ -44,6 +45,11 @@ class DataPacket:
         format_string = self.__create_format_string()
         opcode_and_block = struct.pack(format_string, self.OPCODE, self.block_number)
         return opcode_and_block + self.data
+
+    def is_stop_condition(self):
+        if len(self.data) == 512:
+            return False
+        return True
 
     @staticmethod
     def __create_format_string():

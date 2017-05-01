@@ -75,6 +75,22 @@ class TestDataPacket:
         packet = DataPacket(block_number, string)
         assert '\x00\x03\xff\xff' + string == packet.network_string()
 
+    def test_less_than_max_data_size_is_stop_condition(self):
+        block_number = 42
+        string = create_random_data_string(MAX_DATA_SIZE-1)
+        packet = DataPacket(block_number, string)
+        assert packet.is_stop_condition()
+
+    @pytest.mark.skip(reason="Not sure if we should throw an exception or signal a stop condition without failure")
+    def test_greater_than_max_data_size_is_(self):
+        pass
+
+    def test_max_data_size_is_not_stop_condition(self):
+        block_number = 42
+        string = create_random_data_string(MAX_DATA_SIZE)
+        packet = DataPacket(block_number, string)
+        assert not packet.is_stop_condition()
+
 class TestPacketParse:
     def test_parse_ack_packet_with_smallest_block_number(self):
         received = '\x00\x04\x00\x00'

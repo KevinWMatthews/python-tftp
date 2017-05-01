@@ -28,13 +28,13 @@ class Client:
                 # This returns two tuples, nested:
                 #   (packet, (ip, port))
                 # The Transmission ID is the response port that the server chooses.
-                receive_packet, (server_ip, tid) = self.socket.recvfrom(517)
+                received, (server_ip, tid) = self.socket.recvfrom(517)
             except timeout, msg:
                 print 'Failed to receive from server: %s' % msg
                 return False
 
             block_count += 1
-            packet = tftp.PacketParser.parse(receive_packet)
+            packet = tftp.PacketParser.parse(received)
             #TODO sanity check on packet. How will parse fail?
 
             if not packet.OPCODE == tftp.DataPacket.OPCODE:
@@ -51,17 +51,6 @@ class Client:
             ack_packet = tftp.AckPacket(packet.block_number)
             ack_string = ack_packet.network_string()
             self.socket.sendto(ack_string, (server_ip, tid))
-            if self.__received_stop_condition(packet.data):
+            if packet.is_stop_condition():
                 print 'Download successful!'
                 return True
-
-    def __received_stop_condition(self, data):
-        length = len(data)
-        # print 'Length of packet received: ' + str(length)
-        if length > 512:
-            print 'Received data packet larger than the 512 byte limit!'
-            return True
-        elif length < 512:
-            return True
-        elif length == 512:
-            return False
