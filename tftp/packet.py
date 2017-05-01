@@ -5,11 +5,11 @@ import struct
  ---------------------
 | Opcode |   Block #  |
  ---------------------
-Opcode = 3
+Opcode = 4
  '''
 class AckPacket:
-    def __init__(self, opcode, block_number):
-        self.opcode = opcode
+    def __init__(self, block_number):
+        self.opcode = 4
         self.block_number = block_number
 
     def to_string(self):
@@ -24,10 +24,16 @@ class AckPacket:
         ]
         return ''.join(format_string)
 
-
+'''
+ 2 bytes     2 bytes      n bytes
+ ----------------------------------
+| Opcode |   Block #  |   Data     |
+ ----------------------------------
+Opcode = 3
+'''
 class DataPacket:
-    def __init__(self, opcode, block_number, payload):
-        self.opcode = opcode
+    def __init__(self, block_number, payload):
+        self.opcode = 3
         self.block_number = block_number
         self.data = payload
 
@@ -39,13 +45,13 @@ class PacketFactory:
     def parse(received):
         (opcode, block_number, payload) = PacketFactory.__split_packet(received)
         if opcode == PacketFactory.OPCODE_ACK:
-            return AckPacket(opcode, block_number)
+            return AckPacket(block_number)
         elif opcode == PacketFactory.OPCODE_DATA:
-            return DataPacket(opcode, block_number, payload)
+            return DataPacket(block_number, payload)
 
     @staticmethod
     def factory(opcode, block_number):
-        return AckPacket(opcode, block_number)
+        return AckPacket(block_number)
 
     '''
      2 bytes     2 bytes
