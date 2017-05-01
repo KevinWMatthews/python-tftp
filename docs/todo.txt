@@ -47,6 +47,8 @@ Think about packing the data struct. Will the data be in string form?
 
 What really happens to element 4 in an empty data packet?
 
+Is there a way to get rid of 'from socket import timeout' in Client.py?
+
 
 
 Scripts:

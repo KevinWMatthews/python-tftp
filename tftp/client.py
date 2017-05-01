@@ -1,17 +1,6 @@
-import struct
-from socket import timeout
 import tftp
-
-BYTE_OPCODE_NULL  = '\x00'
-BYTE_OPCODE_READ  = '\x00\x01'
-BYTE_OPCODE_WRITE = '\x00\x02'
-BYTE_OPCODE_DATA  = '\x00\x03'
-BYTE_OPCODE_ACK   = '\x00\x04'
-
-OPCODE_NULL  = 0
-OPCODE_READ  = 1
-OPCODE_WRITE = 2
-OPCODE_DATA  = 3
+from socket import timeout
+import struct
 
 class Client:
     def __init__(self, socket):
