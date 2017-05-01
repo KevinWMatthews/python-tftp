@@ -1,5 +1,40 @@
 import struct
 
+class AckPacket:
+    def __init__(self, block_number):
+        self.block_number = block_number
+
+    def opcode(self):
+        return 4
+
+class PacketFactory:
+    @staticmethod
+    def parse(received):
+        (opcode, block_number) = PacketFactory.__get_opcode_and_block_number(received)
+        return AckPacket(block_number)
+
+    '''
+     2 bytes     2 bytes
+     ---------------------
+    | Opcode |   Block #  |
+     ---------------------
+     '''
+    @staticmethod
+    def __get_opcode_and_block_number(received):
+        format_string = PacketFactory.__create_format_string()
+        return struct.unpack(format_string, received)
+
+    @staticmethod
+    def __create_format_string():
+        format_string = [
+            '!',           # Network (big endian)
+            'H',           # opcode - two-byte unsigned short
+            'H',           # block number - two-byte unsigned short
+        ]
+        return ''.join(format_string)
+
+
+
 class Packet:
     OPCODE_NULL  = 0
     OPCODE_READ  = 1

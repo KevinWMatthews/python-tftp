@@ -1,4 +1,4 @@
-from tftp import Packet
+from tftp import Packet, PacketFactory
 import pytest
 
 from random import choice
@@ -6,6 +6,8 @@ from string import printable
 
 MAX_DATA_SIZE = 512
 MAX_BLOCK_NUMBER = 65535
+
+OPCODE_ACK   = 4
 
 def create_random_data_string(n_bytes):
     random_chars = (choice(printable) for i in range(n_bytes))
@@ -53,12 +55,18 @@ class TestPacketCreate:
 
 class TestPacketParse:
     def test_parse_ack_packet_with_smallest_block_number(self):
-        packet = '\x00\x04\x00\x00'
-        assert (Packet.OPCODE_ACK, 0) == Packet.parse_ack_packet(packet)
+        received = '\x00\x04\x00\x00'
+        packet = PacketFactory.parse(received)
+        assert OPCODE_ACK == packet.opcode()
+        assert 0 == packet.block_number
 
-    def test_parse_ack_packet_with_smallest_block_number(self):
-        packet = '\x00\x04\xff\xff'
-        assert (Packet.OPCODE_ACK, MAX_BLOCK_NUMBER) == Packet.parse_ack_packet(packet)
+    def test_parse_ack_packet_with_largest_block_number(self):
+        received = '\x00\x04\xff\xff'
+        packet = PacketFactory.parse(received)
+        assert OPCODE_ACK == packet.opcode()
+        assert 65535 == packet.block_number
+
+        #  assert (Packet.OPCODE_ACK, MAX_BLOCK_NUMBER) == Packet.parse_ack_packet(packet)
 
     def test_parse_empty_data_packet_smallest_block(self):
         string = ''
