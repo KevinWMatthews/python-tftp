@@ -44,53 +44,65 @@ class TestDataPacket:
         block_number = 0
         string = create_random_data_string(0)
         packet = DataPacket(block_number, string)
+        assert packet.is_payload_valid()
         assert '\x00\x03\x00\x00' + string == packet.network_string()
 
     def test_empty_data_packet_largest_block(self):
         block_number = MAX_BLOCK_NUMBER
         string = create_random_data_string(0)
         packet = DataPacket(block_number, string)
+        assert packet.is_payload_valid()
         assert '\x00\x03\xff\xff' == packet.network_string()
 
     def test_shortest_data_packet_smallest_block(self):
         block_number = 0
         string = create_random_data_string(1)
         packet = DataPacket(block_number, string)
+        assert packet.is_payload_valid()
         assert '\x00\x03\x00\x00' + string == packet.network_string()
 
     def test_shortest_data_packet_largest_block(self):
         block_number = MAX_BLOCK_NUMBER
         string = create_random_data_string(1)
         packet = DataPacket(block_number, string)
+        assert packet.is_payload_valid()
         assert '\x00\x03\xff\xff' + string == packet.network_string()
 
     def test_largest_data_packet_smallest_block(self):
         block_number = 0
         string = create_random_data_string(MAX_DATA_SIZE)
         packet = DataPacket(block_number, string)
+        assert packet.is_payload_valid()
         assert '\x00\x03\x00\x00' + string == packet.network_string()
 
     def test_largest_data_packet_largest_block(self):
         block_number = MAX_BLOCK_NUMBER
         string = create_random_data_string(MAX_DATA_SIZE)
         packet = DataPacket(block_number, string)
+        assert packet.is_payload_valid()
         assert '\x00\x03\xff\xff' + string == packet.network_string()
 
     def test_less_than_max_data_size_is_stop_condition(self):
         block_number = 42
         string = create_random_data_string(MAX_DATA_SIZE-1)
         packet = DataPacket(block_number, string)
+        assert packet.is_payload_valid()
         assert packet.is_stop_condition()
-
-    @pytest.mark.skip(reason="Not sure if we should throw an exception or signal a stop condition without failure")
-    def test_greater_than_max_data_size_is_(self):
-        pass
 
     def test_max_data_size_is_not_stop_condition(self):
         block_number = 42
         string = create_random_data_string(MAX_DATA_SIZE)
         packet = DataPacket(block_number, string)
+        assert packet.is_payload_valid()
         assert not packet.is_stop_condition()
+
+    def test_greater_than_max_data_size_is_invalid(self):
+        block_number = 42
+        string = create_random_data_string(MAX_DATA_SIZE+1)
+        packet = DataPacket(block_number, string)
+        assert not packet.is_payload_valid()
+        assert packet.is_stop_condition()
+
 
 class TestInvalidPacket:
     def test_invalid_packet_has_opcode(self):

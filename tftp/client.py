@@ -55,7 +55,9 @@ class Client:
         if not packet.block_number == block_count:
             print 'Received invalid block number!'
             return False
-        # TFTP protocol imposes no restrictions on the actual data content (that I know of).
+        if not packet.is_payload_valid():
+            print 'Packet payload is invalid!'
+            return False
 
         return True
 

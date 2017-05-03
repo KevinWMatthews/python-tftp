@@ -581,6 +581,37 @@ class TestClient:
         assert 3 == mock_socket.sendto.call_count
         assert expected_args == mock_socket.sendto.call_args_list
 
+    '''
+    Client              Server
+    __________________________
+    Read        -->
+                <--     Data block 1 (== 513 bytes of data)
+    '''
+    def test_client_fails_if_data_is_too_large(self, mock_socket):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        packet = create_read_packet(filename)
+        read_request_args = create_socket_tuple(packet, server_ip, server_port)
+
+        # Server response - data packet
+        block_number = 1
+        data = create_random_data_string(MAX_DATA_SIZE+1)
+        packet = create_data_response(block_number, data)
+        server_response = create_socket_tuple(packet, server_ip, tid)
+
+        # Set server response
+        mock_socket.recvfrom.side_effect = [server_response]
+
+        ### Test
+        client = Client(mock_socket)
+        assert False == client.read(filename, server_ip, server_port)
+
     @pytest.mark.skip('todo')
     def test_read_a_different_filename(self, mock_socket):
         pass

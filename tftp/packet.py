@@ -40,14 +40,18 @@ class DataPacket:
     def __init__(self, block_number, payload):
         self.block_number = block_number
         self.data = payload
+        self.block_size = 512
 
     def network_string(self):
         format_string = self.__create_format_string()
         opcode_and_block = struct.pack(format_string, self.OPCODE, self.block_number)
         return opcode_and_block + self.data
 
+    def is_payload_valid(self):
+        return len(self.data) <= self.block_size
+
     def is_stop_condition(self):
-        if len(self.data) == 512:
+        if len(self.data) == self.block_size:
             return False
         return True
 
