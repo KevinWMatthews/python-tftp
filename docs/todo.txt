@@ -1,34 +1,23 @@
+Should client tests create their own packets or use the various Packet classes? Probably the packet classes.
+
+Allow variable MAX_DATA_SIZE. Where does it belong now?
+
 I've hard-coded self.socket in Client's helper methods. This is fine for now (forever?).
 
-Add a check to see if we've received too much data?
-Do we discard or save this packet?
-
-Add server retries to test list.
+Make ReadPacket mode default to octet.
 
 For block number failure in client read:
+    # print 'Received wrong block number! Expecting 1 but got %s' % block_number
+    The block number is an unprintable character. How can I display the hex code?
 
-# print 'Received wrong block number! Expecting 1 but got %s' % block_number
-The block number is an unprintable character. How can I display the hex code?
+Implement varying debug levels.
 
-Can we import the opcodes from the class?
-
-Do we need to sanitize the data portion of the packet in client.read()? For example, do we send an ack if we receive a packet that is < 512K? I'm pretty sure.
-
-Deal with debug statements and levels.
-
-__parse_response_packet() probably needs a try statement.
-Should we move input sanitation into __parse_response_packet()? We can't because we won't always expect the same opcode or block number.
-*** If input sanitation fails, do we send a response to the server?
-
-Deal with the server missing our ack and sending the same packet again.
+Implement server retries.
+    The server can miss the client ack and sending the same packet again.
     Wonder how to test this in the real world. Maybe have a dummy socket that we can swap in somehow?
 
 Handle error messages from server:
     File not found
-
-Add test case for when the data field is exactly 512 bytes. In this case the server will send a second, empty packet.
-
-Add rollover test cases: 511 bytes, 512 bytes, 513 bytes?
 
 DataPacket, format_string(),
     # Rather than trying to pack a variable amount of data into the struct,
@@ -37,8 +26,6 @@ DataPacket, format_string(),
 
 Misc:
 
-# There is something funky with the list of arguments. I have to create it all at once with the tuples?
-
 Do we want to try to verify the console output of client read failures? Probably not.
 Do we want to return an error message? Not sure yet. It is simpler to return false for now.
 
@@ -46,17 +33,14 @@ Should we combine server ip and port/tid into a single tuple, the socket address
 
 Revise random string generator to include all bytes of data, not just printable characters.
 
-Tests: should create_packet() throw an exception if you pass it something that is not a string?
+What really happens to element 4 in an empty data packet? Revisit this.
 
-Should probably extract details on TFTP packets. They have their own standard, and now I made their own tests!
+Is there a way to get rid of 'from socket import timeout' in Client.py? Can we somehow use socket.timeout?
 
-Think about packing the data struct. Will the data be in string form?
-
-What really happens to element 4 in an empty data packet?
-
-Is there a way to get rid of 'from socket import timeout' in Client.py?
-
-Add mode as an option.
+Add options to Client initialization:
+    mode
+    filename
+    port
 
 
 
