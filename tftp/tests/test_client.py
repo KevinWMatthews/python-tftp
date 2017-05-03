@@ -1,4 +1,4 @@
-from tftp import Client
+from tftp import Client, ReadPacket, DataPacket, AckPacket
 import pytest
 import mock
 from socket import timeout
@@ -97,11 +97,13 @@ class TestClient:
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
+        mode = 'octet'
 
         ### Set expectations
         # Client read request
-        packet = create_read_packet(filename)
-        read_request_args = create_socket_tuple(packet, server_ip, server_port)
+        packet = ReadPacket(filename, mode)
+        read_request = packet.network_string()
+        read_request_args = create_socket_tuple(read_request, server_ip, server_port)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
@@ -116,6 +118,10 @@ class TestClient:
         client = Client(mock_socket)
         assert False == client.read(filename, server_ip, server_port)
 
+        ### Check expectations
+        assert 1 == mock_socket.sendto.call_count
+        assert expected_args == mock_socket.sendto.call_args_list
+
     '''
     Client              Server
     __________________________
@@ -127,18 +133,21 @@ class TestClient:
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
+        mode = 'octet'
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
         # Client read request
-        packet = create_read_packet(filename)
-        read_request_args = create_socket_tuple(packet, server_ip, server_port)
+        read_packet = ReadPacket(filename, mode)
+        read_request = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_request, server_ip, server_port)
 
         # Server response
         block_number = 2                # Should be block number 1 but isn't
         data = create_random_data_string(1)
-        packet = create_data_response(block_number, data)
-        server_response = create_socket_tuple(packet, server_ip, tid)
+        data_packet = DataPacket(block_number, data)
+        data_response = data_packet.network_string()
+        server_response = create_socket_tuple(data_response, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
@@ -167,20 +176,24 @@ class TestClient:
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
+        mode = 'octet'
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
         # Client read request
-        packet = create_read_packet(filename)
-        read_request_args = create_socket_tuple(packet, server_ip, server_port)
+        read_packet = ReadPacket(filename, mode)
+        read_request = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_request, server_ip, server_port)
 
         # Server response
-        opcode = OPCODE_ACK                 # Should be OPCODE_DATA
-        block_number = pack_block_number(1)
+        opcode = AckPacket.OPCODE       # Will set the wrong opcode
+        block_number = 1
         data = create_random_data_string(1)
-        data_packet = OPCODE_WRITE + block_number + data
-        packet = create_packet(opcode, block_number, data)
-        server_response = create_socket_tuple(packet, server_ip, tid)
+
+        data_packet = DataPacket(block_number, data)
+        data_packet.OPCODE = opcode
+        data_response = data_packet.network_string()
+        server_response = create_socket_tuple(data_response, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)

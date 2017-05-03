@@ -42,6 +42,8 @@ Add options to Client initialization:
     filename
     port
 
+Change import statments in tests? import tftp -> tftp.Client, tftp.ReadPacket, etc.
+
 
 
 Scripts:
