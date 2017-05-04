@@ -6,66 +6,20 @@ from random import choice
 from string import printable
 from struct import pack
 
-OPCODE_NULL = '\x00'
-OPCODE_READ = '\x00\x01'
-OPCODE_WRITE = '\x00\x02'
-OPCODE_DATA = '\x00\x03'
-OPCODE_ACK  = '\x00\x04'
-
 MAX_DATA_SIZE = 512
 MAX_BLOCK_NUMBER = 65535
 
-# Create various TFTP packets
-'''
-2 bytes     string    1 byte     string   1 byte
-------------------------------------------------
-| Opcode |  Filename  |   0  |    Mode    |   0  |
-------------------------------------------------
-'''
-def create_read_packet(filename):
-    return create_packet(OPCODE_READ, filename, OPCODE_NULL, 'octet', OPCODE_NULL)
-
-'''
- 2 bytes     2 bytes
- ---------------------
-| Opcode |   Block #  |
- ---------------------
- '''
-def create_ack_packet(block_number):
-    block_string = pack_block_number(block_number)
-    return create_packet(OPCODE_ACK, block_string)
-
-
-'''
-server response packet structure:
- 2 bytes     2 bytes      n bytes
- ----------------------------------
-| Opcode |   Block #  |   Data     |
- ----------------------------------
-'''
-def create_data_response(block_number, data):
-    block_string = pack_block_number(block_number)
-    return create_packet(OPCODE_DATA, block_string, data)
-
-# Create a general packet from the fields given.
-# Fields are concatenated in sequential order.
-# All fields must be of the same type (assumed to be a string).
-def create_packet(*fields):
-    return ''.join(fields)
 
 # Python's sendto() and recvfrom() methods accept and return a tuple containing:
 #   (data, (ip, port))
 # They package the ip and port together - the socket address.
-def create_socket_tuple(packet, ip, port):
-    return (packet, (ip, port))
-
-# Return the block number as a string of hex
-def pack_block_number(block_number):
-    return pack('!H', block_number)
+def create_socket_tuple(string, ip, port):
+    return (string, (ip, port))
 
 def create_random_data_string(n_bytes):
     random_chars = (choice(printable) for i in range(n_bytes))
     return ''.join(random_chars)
+
 
 class TestClient:
 
@@ -101,15 +55,15 @@ class TestClient:
 
         ### Set expectations
         # Client read request
-        packet = ReadPacket(filename, mode)
-        read_request = packet.network_string()
-        read_request_args = create_socket_tuple(read_request, server_ip, server_port)
+        read_packet = ReadPacket(filename, mode)
+        read_string = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
-                        (read_request_args,),
-                        ]
+            (read_request_args,),
+        ]
 
         # Server response - socket.timeout
         mock_socket.recvfrom.side_effect = timeout
@@ -146,14 +100,14 @@ class TestClient:
         block_number = 2                # Should be block number 1 but isn't
         data = create_random_data_string(1)
         data_packet = DataPacket(block_number, data)
-        data_response = data_packet.network_string()
-        server_response = create_socket_tuple(data_response, server_ip, tid)
+        data_string = data_packet.network_string()
+        server_response = create_socket_tuple(data_string, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
-                        (read_request_args,),
-                        ]
+            (read_request_args,),
+        ]
         # Set server response
         mock_socket.recvfrom.side_effect = [server_response]
 
@@ -169,7 +123,7 @@ class TestClient:
     Client              Server
     __________________________
     Read        -->
-                <--     Failure: opcode != OPCODE_DATA
+                <--     Failure: opcode != 3
     '''
     def test_server_returns_wrong_opcode_to_read_request(self, mock_socket):
         ### Setup
@@ -192,14 +146,14 @@ class TestClient:
 
         data_packet = DataPacket(block_number, data)
         data_packet.OPCODE = opcode
-        data_response = data_packet.network_string()
-        server_response = create_socket_tuple(data_response, server_ip, tid)
+        data_string = data_packet.network_string()
+        server_response = create_socket_tuple(data_string, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
-                        (read_request_args,),
-                        ]
+            (read_request_args,),
+        ]
         # Set server response
         mock_socket.recvfrom = mock.Mock(return_value = server_response)
 
@@ -223,29 +177,33 @@ class TestClient:
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
+        mode = 'octet'
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
         # Client read request
-        packet = create_read_packet(filename)
-        read_request_args = create_socket_tuple(packet, server_ip, server_port)
+        read_packet = ReadPacket(filename, mode)
+        read_request = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_request, server_ip, server_port)
 
         # Server response - data packet
         block_number = 1
         data = create_random_data_string(1)
-        packet = create_data_response(block_number, data)
-        server_response = create_socket_tuple(packet, server_ip, tid)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response = create_socket_tuple(data_string, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_packet(block_number)
-        ack_packet_args = create_socket_tuple(packet, server_ip, tid)
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
-                        (read_request_args,),
-                        (ack_packet_args,),
-                        ]
+            (read_request_args,),
+            (ack_packet_args,),
+        ]
         # Set server response
         mock_socket.recvfrom.side_effect = [server_response]
 
@@ -269,29 +227,33 @@ class TestClient:
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
+        mode = 'octet'
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
         # Client read request
-        packet = create_read_packet(filename)
-        read_request_args = create_socket_tuple(packet, server_ip, server_port)
+        read_packet = ReadPacket(filename, mode)
+        read_string = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
 
         # Server response - data packet
         block_number = 1
         data = create_random_data_string(MAX_DATA_SIZE-1)
-        packet = create_data_response(block_number, data)
-        server_response = create_socket_tuple(packet, server_ip, tid)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response = create_socket_tuple(data_string, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_packet(block_number)
-        ack_packet_args = create_socket_tuple(packet, server_ip, tid)
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
-                        (read_request_args,),
-                        (ack_packet_args,),
-                        ]
+            (read_request_args,),
+            (ack_packet_args,),
+        ]
         # Set server response
         mock_socket.recvfrom.side_effect = [server_response]
 
@@ -319,23 +281,27 @@ class TestClient:
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
+        mode = 'octet'
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
         # Client read request
-        packet = create_read_packet(filename)
-        read_request_args = create_socket_tuple(packet, server_ip, server_port)
+        read_packet = ReadPacket(filename, mode)
+        read_string = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
 
         # Server response - data packet
         block_number = 1
         # Four bytes are taken up by the the opcode adn block number
         data = create_random_data_string(MAX_DATA_SIZE)
-        packet = create_data_response(block_number, data)
-        server_response_1 = create_socket_tuple(packet, server_ip, tid)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response_1 = create_socket_tuple(data_string, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_packet(block_number)
-        ack_packet_args = create_socket_tuple(packet, server_ip, tid)
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
 
         # Server response - socket.timeout
         server_response_2 = timeout
@@ -343,9 +309,9 @@ class TestClient:
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
-                        (read_request_args,),
-                        (ack_packet_args,),
-                        ]
+            (read_request_args,),
+            (ack_packet_args,),
+        ]
         # Set server response
         mock_socket.recvfrom.side_effect = [server_response_1, server_response_2]
 
@@ -372,35 +338,40 @@ class TestClient:
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
+        mode = 'octet'
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
         # Client read request
-        packet = create_read_packet(filename)
-        read_request_args = create_socket_tuple(packet, server_ip, server_port)
+        read_packet = ReadPacket(filename, mode)
+        read_string = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
 
         # Server response - data packet
         block_number = 1
         data = create_random_data_string(MAX_DATA_SIZE)
-        packet = create_data_response(block_number, data)
-        server_response_1 = create_socket_tuple(packet, server_ip, tid)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response_1 = create_socket_tuple(data_string, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_packet(block_number)
-        ack_packet_args = create_socket_tuple(packet, server_ip, tid)
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
 
         # Server response - wrong block number
         block_number = 3                # Should be block number 2 but isn't
         data = create_random_data_string(1)
-        packet = create_data_response(block_number, data)
-        server_response_2 = create_socket_tuple(packet, server_ip, tid)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response_2 = create_socket_tuple(data_string, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
-                        (read_request_args,),
-                        (ack_packet_args,),
-                        ]
+            (read_request_args,),
+            (ack_packet_args,),
+        ]
         # Set server response
         mock_socket.recvfrom.side_effect = [server_response_1, server_response_2]
 
@@ -426,38 +397,48 @@ class TestClient:
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
+        mode = 'octet'
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
         # Client read request
-        packet = create_read_packet(filename)
-        read_request_args = create_socket_tuple(packet, server_ip, server_port)
+        read_packet = ReadPacket(filename, mode)
+        read_string = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
 
         # Server response - data packet
         block_number = 1
         data = create_random_data_string(MAX_DATA_SIZE)
-        packet = create_data_response(block_number, data)
-        server_response_1 = create_socket_tuple(packet, server_ip, tid)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response_1 = create_socket_tuple(data_string, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_packet(block_number)
-        ack_packet_args = create_socket_tuple(packet, server_ip, tid)
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
 
         # Server response - wrong block number
-        opcode = OPCODE_NULL                # Should be OPCODE_DATA
-        block_number = pack_block_number(2)
+        opcode = AckPacket.OPCODE       # Will set wrong opcode
+        block_number = 2
         data = create_random_data_string(1)
-        packet = create_packet(opcode, block_number, data)
-        server_response_2 = create_socket_tuple(packet, server_ip, tid)
+
+        data_packet = DataPacket(block_number, data)
+        data_packet.OPCODE = opcode
+        data_string = data_packet.network_string()
+        server_response_2 = create_socket_tuple(data_string, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
-                        (read_request_args,),
-                        (ack_packet_args,),
-                        ]
+            (read_request_args,),
+            (ack_packet_args,),
+        ]
         # Set server response
-        mock_socket.recvfrom.side_effect = [server_response_1, server_response_2]
+        mock_socket.recvfrom.side_effect = [
+            server_response_1,
+            server_response_2
+        ]
 
         ### Test
         client = Client(mock_socket)
@@ -482,45 +463,51 @@ class TestClient:
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
+        mode = 'octet'
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
         # Client read request
-        packet = create_read_packet(filename)
-        read_packet = create_socket_tuple(packet, server_ip, server_port)
+        read_packet = ReadPacket(filename, mode)
+        read_string = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
 
         # Server response - data packet
         block_number = 1
         data = create_random_data_string(MAX_DATA_SIZE)
-        packet = create_data_response(block_number, data)
-        server_response_1 = create_socket_tuple(packet, server_ip, tid)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response_1 = create_socket_tuple(data_string, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_packet(block_number)
-        client_ack_1 = create_socket_tuple(packet, server_ip, tid)
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        client_ack_1_args = create_socket_tuple(ack_string, server_ip, tid)
 
         # Server response - data packet
         block_number = 2
         data = ''
-        packet = create_data_response(block_number, data)
-        server_response_2 = create_socket_tuple(packet, server_ip, tid)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response_2 = create_socket_tuple(data_string, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_packet(block_number)
-        client_ack_2 = create_socket_tuple(packet, server_ip, tid)
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        client_ack_2_args = create_socket_tuple(ack_string, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
-                (read_packet,),
-                (client_ack_1,),
-                (client_ack_2,),
-                ]
+            (read_request_args,),
+            (client_ack_1_args,),
+            (client_ack_2_args,),
+        ]
         # Set server response
         mock_socket.recvfrom.side_effect = [
-                server_response_1,
-                server_response_2
-                ]
+            server_response_1,
+            server_response_2
+        ]
 
         ### Test
         client = Client(mock_socket)
@@ -546,45 +533,51 @@ class TestClient:
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
+        mode = 'octet'
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
         # Client read request
-        packet = create_read_packet(filename)
-        read_packet = create_socket_tuple(packet, server_ip, server_port)
+        read_packet = ReadPacket(filename, mode)
+        read_request = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_request, server_ip, server_port)
 
         # Server response - data packet
         block_number = 1
         data = create_random_data_string(MAX_DATA_SIZE)
-        packet = create_data_response(block_number, data)
-        server_response_1 = create_socket_tuple(packet, server_ip, tid)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response_1 = create_socket_tuple(data_string, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_packet(block_number)
-        client_ack_1 = create_socket_tuple(packet, server_ip, tid)
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        client_ack_1_args = create_socket_tuple(ack_string, server_ip, tid)
 
         # Server response - data packet
         block_number = 2
         data = create_random_data_string(1)
-        packet = create_data_response(block_number, data)
-        server_response_2 = create_socket_tuple(packet, server_ip, tid)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response_2 = create_socket_tuple(data_string, server_ip, tid)
 
         # Cliet ack response
-        packet = create_ack_packet(block_number)
-        client_ack_2 = create_socket_tuple(packet, server_ip, tid)
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        client_ack_2_args = create_socket_tuple(ack_string, server_ip, tid)
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
-                (read_packet,),
-                (client_ack_1,),
-                (client_ack_2,),
-                ]
+            (read_request_args,),
+            (client_ack_1_args,),
+            (client_ack_2_args,),
+        ]
         # Set server response
         mock_socket.recvfrom.side_effect = [
-                server_response_1,
-                server_response_2
-                ]
+            server_response_1,
+            server_response_2
+        ]
 
         ### Test
         client = Client(mock_socket)
@@ -605,18 +598,21 @@ class TestClient:
         server_ip = '127.0.0.1'
         server_port = 69
         filename = 'test.txt'
+        mode = 'octet'
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
         # Client read request
-        packet = create_read_packet(filename)
-        read_request_args = create_socket_tuple(packet, server_ip, server_port)
+        read_packet = ReadPacket(filename, mode)
+        read_string = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
 
         # Server response - data packet
         block_number = 1
         data = create_random_data_string(MAX_DATA_SIZE+1)
-        packet = create_data_response(block_number, data)
-        server_response = create_socket_tuple(packet, server_ip, tid)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response = create_socket_tuple(data_string, server_ip, tid)
 
         # Set server response
         mock_socket.recvfrom.side_effect = [server_response]
