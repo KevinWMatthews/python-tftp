@@ -1,10 +1,9 @@
 from tftp import Client, ReadPacket, DataPacket, AckPacket
 import pytest
 import mock
-from socket import timeout
+import socket
 from random import choice
 from string import printable
-from struct import pack
 
 MAX_DATA_SIZE = 512
 MAX_BLOCK_NUMBER = 65535
@@ -44,7 +43,7 @@ class TestClient:
     Client              Server
     __________________________
     Read        -->
-                <--     Failure: timeout
+                <--     Failure: socket timeout
     '''
     def test_server_does_not_respond_to_read_request(self, mock_socket):
         ### Setup
@@ -65,8 +64,8 @@ class TestClient:
             (read_request_args,),
         ]
 
-        # Server response - socket.timeout
-        mock_socket.recvfrom.side_effect = timeout
+        # Server response
+        mock_socket.recvfrom.side_effect = socket.timeout
 
         ### Test
         client = Client(mock_socket)
@@ -274,7 +273,7 @@ class TestClient:
                 <--     Data block 1 (== 512 bytes of data)
     Ack block 1 -->
 
-                <--     Failure: timeout
+                <--     Failure: socket timeout
     '''
     def test_server_does_not_send_next_block(self, mock_socket):
         ### Setup
@@ -303,8 +302,8 @@ class TestClient:
         ack_string = ack_packet.network_string()
         ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
 
-        # Server response - socket.timeout
-        server_response_2 = timeout
+        # Server response
+        server_response_2 = socket.timeout
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
