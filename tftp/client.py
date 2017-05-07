@@ -5,12 +5,13 @@ import struct
 class Client:
     def __init__(self, socket):
         self.socket = socket
+        self.block_size = 512
 
     def read(self, filename, ip, port):
         mode = 'octet'
         self.__initiate_read_from_server(filename, mode, ip, port)
 
-        buffer_size = 517
+        buffer_size = self.__get_buffer_size(self.block_size)
         block_count = 0
         while True:
             (packet, server_ip, tid) = self.__get_server_response(buffer_size)
@@ -65,3 +66,8 @@ class Client:
         ack_packet = tftp.AckPacket(block_number)
         ack_string = ack_packet.network_string()
         self.socket.sendto(ack_string, (server_ip, tid))
+
+    def __get_buffer_size(self, block_size):
+        opcode_length = 2
+        block_number_length = 2
+        return opcode_length + block_number_length + block_size

@@ -1,10 +1,4 @@
-Should client tests create their own packets or use the various Packet classes? Probably the packet classes.
 
-Allow variable MAX_DATA_SIZE. Where does it belong now?
-
-I've hard-coded self.socket in Client's helper methods. This is fine for now (forever?).
-
-Make ReadPacket mode default to octet.
 
 For block number failure in client read:
     # print 'Received wrong block number! Expecting 1 but got %s' % block_number
@@ -24,8 +18,17 @@ DataPacket, format_string(),
     # we'll just insist that the data is in string format and concatenate the strings.
     # Is this assumption valid?
 
-Misc:
 
+
+    Scripts:
+Modify random_string to produce a variable-length string.
+Modify tftp_get to allow the user to enter a filename.
+Specify/determine the download location.
+Move testing scripts to a different folder. Also don't distribute.
+
+
+
+    Misc:
 Do we want to try to verify the console output of client read failures? Probably not.
 Do we want to return an error message? Not sure yet. It is simpler to return false for now.
 
@@ -44,10 +47,8 @@ Add options to Client initialization:
 
 Change import statments in tests? import tftp -> tftp.Client, tftp.ReadPacket, etc.
 
+Should we add an extra character to the receive buffer to see if the server sent extra data?
 
+I've hard-coded self.socket in Client's helper methods. This is fine for now (forever?).
 
-Scripts:
-Modify random_string to produce a variable-length string.
-Modify tftp_get to allow the user to enter a filename.
-Specify/determine the download location.
-Move testing scripts to a different folder. Also don't distribute.
+Make ReadPacket mode default to octet.
