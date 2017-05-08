@@ -274,6 +274,10 @@ class TestClient:
     Ack block 1 -->
 
                 <--     Failure: socket timeout
+    Ack block 1 -->
+
+                <--     Failure: socket timeout
+    Terminate
     '''
     def test_server_does_not_send_next_block(self, mock_socket):
         ### Setup
@@ -291,7 +295,6 @@ class TestClient:
 
         # Server response - data packet
         block_number = 1
-        # Four bytes are taken up by the the opcode adn block number
         data = create_random_data_string(MAX_DATA_SIZE)
         data_packet = DataPacket(block_number, data)
         data_string = data_packet.network_string()
@@ -300,19 +303,27 @@ class TestClient:
         # Client ack response
         ack_packet = AckPacket(block_number)
         ack_string = ack_packet.network_string()
-        ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
+        client_ack_1_args = create_socket_tuple(ack_string, server_ip, tid)
 
         # Server response
-        server_response_2 = socket.timeout
+        server_response_timeout = socket.timeout
+
+        # Client ack response
+        #  ack_packet = AckPacket(block_number)
+        #  ack_string = ack_packet.network_string()
+        #  ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
+
+        # Server response
+        #  server_response_timeout = socket.timeout
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
             (read_request_args,),
-            (ack_packet_args,),
+            (client_ack_1_args,),
         ]
         # Set server response
-        mock_socket.recvfrom.side_effect = [server_response_1, server_response_2]
+        mock_socket.recvfrom.side_effect = [server_response_1, server_response_timeout]
 
         ### Test
         client = Client(mock_socket)
@@ -699,6 +710,80 @@ class TestClient:
         ### Check expectations
         assert 4 == mock_socket.sendto.call_count
         assert expected_args == mock_socket.sendto.call_args_list
+
+    @pytest.mark.skip(reason='Fix test_server_does_not_send_next_block() first')
+    def test_client_resends_ack_if_times_out_waiting_for_data_packet(self, mock_socket):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        mode = 'octet'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        read_packet = ReadPacket(filename, mode)
+        read_string = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
+
+        # Server response - data packet
+        block_number = 1
+        data = create_random_data_string(MAX_DATA_SIZE)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response_1 = create_socket_tuple(data_string, server_ip, tid)
+
+        # Client ack response
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        client_ack_1_args = create_socket_tuple(ack_string, server_ip, tid)
+
+        # Server response - timeout
+        server_response_timeout = socket.timeout
+
+        # Client resends ack response
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        client_ack_2_args = create_socket_tuple(ack_string, server_ip, tid)
+
+        # Server response - data packet
+        block_number = 2
+        data = create_random_data_string(1)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response_2 = create_socket_tuple(data_string, server_ip, tid)
+
+        # Client ack response
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        client_ack_2_args = create_socket_tuple(ack_string, server_ip, tid)
+
+        # Set client expectations
+        # A list of: (<ordered arguments>, <empty_dictionary>)
+        expected_args = [
+            (read_request_args,),
+            (client_ack_1_args,),
+            (client_ack_1_args,),
+            (client_ack_2_args,),
+        ]
+        # Set server response
+        mock_socket.recvfrom.side_effect = [
+            server_response_1,
+            server_response_timeout,
+            server_response_2,
+        ]
+
+        ### Test
+        client = Client(mock_socket)
+        assert True == client.read(filename, server_ip, server_port)
+
+        ### Check expectations
+        assert 3 == mock_socket.sendto.call_count
+        assert expected_args == mock_socket.sendto.call_args_list
+
+        # Server response
+        mock_socket.recvfrom.side_effect = socket.timeout
+
 
     @pytest.mark.skip('todo')
     def test_read_a_different_filename(self, mock_socket):
