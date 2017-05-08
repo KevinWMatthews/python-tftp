@@ -4,6 +4,7 @@ Implement transmission retries:
 
 Figure out how to append a message to the socket timeout in Client tests.
     Is there a better property to use other than the string "timeout"? A sympol, perhaps? Like ruby?
+    Make timeout naming of tests more clear.
 
 Should we package an error message in the Invalid Packet? It could be useful for troubleshooting.
 

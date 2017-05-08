@@ -309,25 +309,25 @@ class TestClient:
         server_response_timeout = socket.timeout
 
         # Client resends ack response
-        #  ack_packet = AckPacket(block_number)
-        #  ack_string = ack_packet.network_string()
-        #  client_ack_1_args  = create_socket_tuple(ack_string, server_ip, tid)
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        client_ack_1_args  = create_socket_tuple(ack_string, server_ip, tid)
 
         # Server response
-        #  server_response_timeout = socket.timeout
+        server_response_timeout = socket.timeout
 
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
             (read_request_args,),
             (client_ack_1_args,),
-            #  (client_ack_1_args,),
+            (client_ack_1_args,),
         ]
         # Set server response
         mock_socket.recvfrom.side_effect = [
             server_response_1,
             server_response_timeout,
-            #  server_response_timeout,
+            server_response_timeout,
         ]
 
         ### Test

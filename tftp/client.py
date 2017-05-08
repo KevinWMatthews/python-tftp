@@ -16,6 +16,17 @@ class Client:
         while True:
             (packet, server_ip, tid) = self.__get_server_response(buffer_size)
 
+            if packet.OPCODE == tftp.InvalidPacket.OPCODE:
+                if block_count == 0:
+                    print 'Server did not respond to read request!'
+                    return False
+                else:
+                    print 'Server timed out! Resending last ack packet'
+                    self.__send_ack_response(block_count, server_ip, tid)
+                    #TODO only do this once.
+                    continue
+
+
             if not packet.OPCODE == tftp.DataPacket.OPCODE:
                 print 'Received wrong opcode!'
                 print 'Aborting transfer!'
