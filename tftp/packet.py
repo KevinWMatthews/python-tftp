@@ -109,8 +109,8 @@ OPCODE = 0
 class InvalidPacket:
     OPCODE = 0
 
-    def __init__(self):
-        pass
+    def __init__(self, error_msg=''):
+        self.error_msg = error_msg
 
 class PacketParser:
     @staticmethod

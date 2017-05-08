@@ -108,6 +108,13 @@ class TestInvalidPacket:
     def test_invalid_packet_has_opcode(self):
         packet = InvalidPacket()
         assert OPCODE_INVALID == packet.OPCODE
+        assert '' == packet.error_msg
+
+    def test_invalid_packet_due_to_timeout(self):
+        error_msg = "timeout"
+        packet = InvalidPacket(error_msg=error_msg)
+        assert OPCODE_INVALID == packet.OPCODE
+        assert error_msg == packet.error_msg
 
 class TestPacketParse:
     def test_parse_invalid_packet(self):
