@@ -1,4 +1,12 @@
+Implement transmission retries:
+    If the client fails to send an ack, the server will timeout and retransmit the last data packet.
+    If the server does not send a data packet, the client will retransmit the last ack packet.
 
+From the spec:
+ If a packet gets lost in the
+ network, the intended recipient will timeout and may retransmit his
+ last packet (which may be data or an acknowledgment), thus causing
+ the sender of the lost packet to retransmit that lost packet.
 
 For block number failure in client read:
     # print 'Received wrong block number! Expecting 1 but got %s' % block_number
