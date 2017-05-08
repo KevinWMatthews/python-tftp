@@ -192,7 +192,7 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response = create_socket_tuple(data_string, server_ip, tid)
 
-        # Cliet ack response
+        # Client ack response
         ack_packet = AckPacket(block_number)
         ack_string = ack_packet.network_string()
         ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
@@ -242,7 +242,7 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response = create_socket_tuple(data_string, server_ip, tid)
 
-        # Cliet ack response
+        # Client ack response
         ack_packet = AckPacket(block_number)
         ack_string = ack_packet.network_string()
         ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
@@ -297,7 +297,7 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response_1 = create_socket_tuple(data_string, server_ip, tid)
 
-        # Cliet ack response
+        # Client ack response
         ack_packet = AckPacket(block_number)
         ack_string = ack_packet.network_string()
         ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
@@ -353,7 +353,7 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response_1 = create_socket_tuple(data_string, server_ip, tid)
 
-        # Cliet ack response
+        # Client ack response
         ack_packet = AckPacket(block_number)
         ack_string = ack_packet.network_string()
         ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
@@ -412,7 +412,7 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response_1 = create_socket_tuple(data_string, server_ip, tid)
 
-        # Cliet ack response
+        # Client ack response
         ack_packet = AckPacket(block_number)
         ack_string = ack_packet.network_string()
         ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
@@ -478,7 +478,7 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response_1 = create_socket_tuple(data_string, server_ip, tid)
 
-        # Cliet ack response
+        # Client ack response
         ack_packet = AckPacket(block_number)
         ack_string = ack_packet.network_string()
         client_ack_1_args = create_socket_tuple(ack_string, server_ip, tid)
@@ -490,7 +490,7 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response_2 = create_socket_tuple(data_string, server_ip, tid)
 
-        # Cliet ack response
+        # Client ack response
         ack_packet = AckPacket(block_number)
         ack_string = ack_packet.network_string()
         client_ack_2_args = create_socket_tuple(ack_string, server_ip, tid)
@@ -548,7 +548,7 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response_1 = create_socket_tuple(data_string, server_ip, tid)
 
-        # Cliet ack response
+        # Client ack response
         ack_packet = AckPacket(block_number)
         ack_string = ack_packet.network_string()
         client_ack_1_args = create_socket_tuple(ack_string, server_ip, tid)
@@ -560,7 +560,7 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response_2 = create_socket_tuple(data_string, server_ip, tid)
 
-        # Cliet ack response
+        # Client ack response
         ack_packet = AckPacket(block_number)
         ack_string = ack_packet.network_string()
         client_ack_2_args = create_socket_tuple(ack_string, server_ip, tid)
