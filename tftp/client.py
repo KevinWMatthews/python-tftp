@@ -15,12 +15,17 @@ class Client:
         block_count = 0
         while True:
             (packet, server_ip, tid) = self.__get_server_response(buffer_size)
-            block_count += 1
 
-            if not self.__is_valid_data_packet(packet):
-                print 'Client received invalid response from server.'
+            if not packet.OPCODE == tftp.DataPacket.OPCODE:
+                print 'Received wrong opcode!'
                 print 'Aborting transfer!'
                 return False
+            if not packet.is_payload_valid():
+                print 'Packet payload is invalid!'
+                print 'Aborting transfer!'
+                return False
+
+            block_count += 1
 
             if self.__is_packet_retry(packet, block_count):
                 print 'Server resending packet!'
@@ -58,14 +63,7 @@ class Client:
         return (packet, server_ip, tid)
 
     def __is_valid_data_packet(self, packet):
-        if not packet.OPCODE == tftp.DataPacket.OPCODE:
-            print 'Received wrong opcode!'
-            return False
-        if not packet.is_payload_valid():
-            print 'Packet payload is invalid!'
-            return False
-
-        return True
+        pass
 
     def __is_valid_block_number(self, packet, block_count):
         if packet.block_number == block_count:

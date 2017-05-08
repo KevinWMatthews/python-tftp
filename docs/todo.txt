@@ -2,6 +2,10 @@ Implement transmission retries:
     If the client fails to send an ack, the server will timeout and retransmit the last data packet.
     If the server does not send a data packet, the client will retransmit the last ack packet.
 
+Figure out how to append a message to the socket timeout in Client tests.
+
+Should we package an error message in the Invalid Packet? It could be useful for troubleshooting.
+
 From the spec:
  If a packet gets lost in the
  network, the intended recipient will timeout and may retransmit his
