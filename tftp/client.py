@@ -13,9 +13,9 @@ class Client:
 
         buffer_size = self.__get_buffer_size(self.block_size)
         block_count = 0
-        while True:
-            (packet, server_ip, tid) = self.__get_server_response(buffer_size)
+        (packet, server_ip, tid) = self.__get_server_response(buffer_size)
 
+        while True:
             if not packet.OPCODE == tftp.DataPacket.OPCODE:
                 print 'Received wrong opcode!'
                 print 'Aborting transfer!'
@@ -42,6 +42,8 @@ class Client:
                 print 'Stop condition received.'
                 print 'Ending transfer!'
                 return True
+
+            (packet, ip, port) = self.__get_server_response(buffer_size)
 
     def __initiate_read_from_server(self, filename, mode, ip, port):
         read_packet = tftp.ReadPacket(filename, mode)

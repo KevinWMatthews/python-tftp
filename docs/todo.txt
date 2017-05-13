@@ -1,3 +1,6 @@
+Add failure mode:
+    Server response is from wrong IP or to wrong TID.
+
 Implement transmission retries:
     If the client fails to send an ack, the server will timeout and retransmit the last data packet.
     If the server does not send a data packet, the client will retransmit the last ack packet.
