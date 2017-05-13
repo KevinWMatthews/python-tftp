@@ -279,6 +279,7 @@ class TestClient:
                 <--     Failure: socket timeout
     Terminate
     '''
+    @pytest.mark.skip(reason='extract first received packet before implementing test')
     def test_server_does_not_send_next_block(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
@@ -650,6 +651,7 @@ class TestClient:
                 <--     Data block 2 (1 byte of data)
     Ack block 2 -->
     '''
+    @pytest.mark.skip(reason='extract first received packet before implementing test')
     def test_can_resend_last_packet(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
