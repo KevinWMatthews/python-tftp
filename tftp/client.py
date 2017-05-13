@@ -14,17 +14,16 @@ class Client:
         buffer_size = self.__get_buffer_size(self.block_size)
         block_count = 0
         (packet, server_ip, tid) = self.__get_server_response(buffer_size)
+        if not packet.OPCODE == tftp.DataPacket.OPCODE:
+            print 'Server error responding to read request!'
+            print 'Aborting transfer!'
+            return False
+        if not packet.is_payload_valid():
+            print 'Packet payload is invalid!'
+            print 'Aborting transfer!'
+            return False
 
         while True:
-            if not packet.OPCODE == tftp.DataPacket.OPCODE:
-                print 'Received wrong opcode!'
-                print 'Aborting transfer!'
-                return False
-            if not packet.is_payload_valid():
-                print 'Packet payload is invalid!'
-                print 'Aborting transfer!'
-                return False
-
             block_count += 1
 
             if self.__is_packet_retry(packet, block_count):
@@ -36,7 +35,7 @@ class Client:
                 return False
 
             # print 'Sending ack response to block number %d' % block_count
-            self.__send_ack_response(packet.block_number, server_ip, tid)
+            self.__send_ack_response(block_count, server_ip, tid)
 
             if packet.is_stop_condition():
                 print 'Stop condition received.'
@@ -44,6 +43,18 @@ class Client:
                 return True
 
             (packet, ip, port) = self.__get_server_response(buffer_size)
+            if packet.OPCODE == tftp.InvalidPacket.OPCODE:
+                self.__send_ack_response(block_count, server_ip, tid)
+                return False
+            if not packet.OPCODE == tftp.DataPacket.OPCODE:
+                print 'Received wrong opcode!'
+                print 'Aborting transfer!'
+                return False
+            if not packet.is_payload_valid():
+                print 'Packet payload is invalid!'
+                print 'Aborting transfer!'
+                return False
+
 
     def __initiate_read_from_server(self, filename, mode, ip, port):
         read_packet = tftp.ReadPacket(filename, mode)
