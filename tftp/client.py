@@ -17,9 +17,33 @@ class Client:
         # The first packet is special only in that we save the TID
         # for the rest of the transmission.
         (packet, server_ip, tid) = self.__get_server_response(buffer_size)
+        #TODO it seems bad that different packet types have different interfaces
+        if not packet.OPCODE == tftp.DataPacket.OPCODE:
+            print 'Received wrong opcode!'
+            print 'Aborting transfer!'
+            return False
+        if not packet.is_payload_valid():
+            print 'Packet payload is invalid!'
+            print 'Aborting transfer!'
+            return False
+        if not packet.block_number == block_count+1:
+            print 'Received invalid block number!'
+            print 'Aborting transfer!'
+            return False
         block_count += 1
+        # print 'Sending ack response to block number %d' % block_count
+        self.__send_ack_response(block_count, server_ip, tid)
+
+        if packet.is_stop_condition():
+            print 'Stop condition received.'
+            print 'Ending transfer!'
+            return True
 
         while True:
+            (packet, ip, port) = self.__get_server_response(buffer_size)
+            block_count += 1
+
+            #TODO it seems bad that different packet types have different interfaces
             if not packet.OPCODE == tftp.DataPacket.OPCODE:
                 print 'Received wrong opcode!'
                 print 'Aborting transfer!'
@@ -40,9 +64,6 @@ class Client:
                 print 'Stop condition received.'
                 print 'Ending transfer!'
                 return True
-
-            (packet, ip, port) = self.__get_server_response(buffer_size)
-            block_count += 1
 
 
 
