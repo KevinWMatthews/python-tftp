@@ -775,6 +775,7 @@ class TestClient:
                 <--     Data block 2 (1 byte of data)
     Ack block 2 -->     Server receives ack
     '''
+    @pytest.mark.skip()
     def test_two_blocks_server_resends_both_blocks(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'

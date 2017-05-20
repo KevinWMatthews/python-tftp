@@ -37,12 +37,12 @@ class Client:
         while True:
             (packet, port) = self.__get_server_response(buffer_size)
             if packet.OPCODE == tftp.TimeoutPacket.OPCODE:
-                packet = last_packet_received
-                if packet == resent_packet:
+                if last_packet_received == resent_packet:
                     print 'Server timed out twice.'
                     print 'Aborting transfer!'
                     return False
-                resent_packet = packet
+                resent_packet = last_packet_received
+                packet = last_packet_received
             elif not self.__is_valid_data_packet(packet):
                 print 'Invalid server response! Aborting transfer.'
                 return False
