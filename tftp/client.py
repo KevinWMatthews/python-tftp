@@ -27,7 +27,7 @@ class Client:
 
         # print 'Sending ack response to block number %d' % packet.block_number
         self.__send_ack_response(packet.block_number, ip, tid)
-        last_packet = packet
+        last_packet_received = packet
 
         if packet.is_stop_condition():
             print 'Stop condition received.'
@@ -37,7 +37,7 @@ class Client:
         while True:
             (packet, port) = self.__get_server_response(buffer_size)
             if packet.OPCODE == tftp.TimeoutPacket.OPCODE:
-                packet = last_packet
+                packet = last_packet_received
                 if packet == resent_packet:
                     print 'Server timed out twice.'
                     print 'Aborting transfer!'
@@ -46,16 +46,16 @@ class Client:
             elif not self.__is_valid_data_packet(packet):
                 print 'Invalid server response! Aborting transfer.'
                 return False
-            elif packet.block_number == last_packet.block_number:
+            elif packet.block_number == last_packet_received.block_number:
                 print 'Server resent last packet'
-            elif not packet.block_number == last_packet.block_number+1:
+            elif not packet.block_number == last_packet_received.block_number+1:
                 print 'Received invalid block number!'
                 print 'Aborting transfer!'
                 return False
 
             # print 'Sending ack response to block number %d' % packet.block_number
             self.__send_ack_response(packet.block_number, ip, tid)
-            last_packet = packet
+            last_packet_received = packet
 
             if packet.is_stop_condition():
                 print 'Stop condition received.'
