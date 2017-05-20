@@ -9,7 +9,6 @@ class Client:
 
     def read(self, filename, ip, port):
         mode = 'octet'
-        last_block_number = 0
         buffer_size = self.__get_buffer_size(self.block_size)
 
         self.__initiate_read_from_server(filename, mode, ip, port)
@@ -31,7 +30,7 @@ class Client:
             print 'Aborting transfer!'
             return False
         # print 'Sending ack response to block number %d' % packet.block_number
-        last_block_number += 1
+        last_block_number = 1
         self.__send_ack_response(packet.block_number, server_ip, tid)
 
         #TODO is this tested?
@@ -53,14 +52,14 @@ class Client:
                 print 'Aborting transfer!'
                 return False
 
-            if packet.block_number == last_block_number:
+            if packet.block_number == last_block_number+1:
+                last_block_number += 1
+            elif packet.block_number == last_block_number:
                 print 'Server resent last packet'
-            elif not packet.block_number == last_block_number+1:
+            else:
                 print 'Received invalid block number!'
                 print 'Aborting transfer!'
                 return False
-            else:
-                last_block_number += 1
 
             # print 'Sending ack response to block number %d' % packet.block_number
             self.__send_ack_response(packet.block_number, server_ip, tid)
@@ -69,8 +68,6 @@ class Client:
                 print 'Stop condition received.'
                 print 'Ending transfer!'
                 return True
-
-
 
 
     def __initiate_read_from_server(self, filename, mode, ip, port):
@@ -89,21 +86,7 @@ class Client:
             return (tftp.InvalidPacket(), '', 0)
 
         packet = tftp.PacketParser.parse(received)
-
         return (packet, server_ip, tid)
-
-    def __is_valid_data_packet(self, packet):
-        pass
-
-    def __is_valid_block_number(self, packet, last_block_number):
-        if packet.block_number == last_block_number:
-            return True
-        return False
-
-    def __is_packet_retry(self, packet, last_block_number):
-        if packet.block_number == last_block_number - 1:
-            return True
-        return False
 
     def __send_ack_response(self, block_number, server_ip, tid):
         ack_packet = tftp.AckPacket(block_number)
