@@ -10,7 +10,7 @@ class Client:
     def read(self, filename, ip, port):
         mode = 'octet'
         buffer_size = self.__get_buffer_size(self.block_size)
-        no_server_response = False
+        resent_packet = 0
 
         self.__initiate_read_from_server(filename, mode, ip, port)
 
@@ -26,8 +26,8 @@ class Client:
             return False
 
         # print 'Sending ack response to block number %d' % packet.block_number
-        last_block_number = 1
         self.__send_ack_response(packet.block_number, ip, tid)
+        last_packet = packet
 
         if packet.is_stop_condition():
             print 'Stop condition received.'
@@ -37,28 +37,25 @@ class Client:
         while True:
             (packet, port) = self.__get_server_response(buffer_size)
             if packet.OPCODE == tftp.TimeoutPacket.OPCODE:
-                if no_server_response:
-                    print 'Server timed out twice!'
-                    print 'Aborting transfer'
+                packet = last_packet
+                if packet == resent_packet:
+                    print 'Server timed out twice.'
+                    print 'Aborting transfer!'
                     return False
-                else:
-                    self.__send_ack_response(last_block_number, ip, tid)
-                    no_server_response = True
-                    continue
-            if not self.__is_valid_data_packet(packet):
+                resent_packet = packet
+            elif not self.__is_valid_data_packet(packet):
                 print 'Invalid server response! Aborting transfer.'
                 return False
-            elif packet.block_number == last_block_number+1:
-                last_block_number += 1
-            elif packet.block_number == last_block_number:
+            elif packet.block_number == last_packet.block_number:
                 print 'Server resent last packet'
-            else:
+            elif not packet.block_number == last_packet.block_number+1:
                 print 'Received invalid block number!'
                 print 'Aborting transfer!'
                 return False
 
             # print 'Sending ack response to block number %d' % packet.block_number
             self.__send_ack_response(packet.block_number, ip, tid)
+            last_packet = packet
 
             if packet.is_stop_condition():
                 print 'Stop condition received.'
