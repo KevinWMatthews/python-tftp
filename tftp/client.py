@@ -26,11 +26,6 @@ class Client:
         while True:
             block_count += 1
 
-            #TODO this is super klunky now. Refactor this.
-            if self.__is_packet_retry(packet, block_count):
-                print 'Server resending packet!'
-                block_count -= 1
-
             if not self.__is_valid_block_number(packet, block_count):
                 print 'Received invalid block number!'
                 return False
