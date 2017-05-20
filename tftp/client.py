@@ -26,14 +26,15 @@ class Client:
             print 'Packet payload is invalid!'
             print 'Aborting transfer!'
             return False
-        if not packet.block_number == num_packets_processed+1:
+        if not packet.block_number == 1:
             print 'Received invalid block number!'
             print 'Aborting transfer!'
             return False
+        # print 'Sending ack response to block number %d' % packet.block_number
+        self.__send_ack_response(packet.block_number, server_ip, tid)
         num_packets_processed += 1
-        # print 'Sending ack response to block number %d' % num_packets_processed
-        self.__send_ack_response(num_packets_processed, server_ip, tid)
 
+        #TODO is this tested?
         if packet.is_stop_condition():
             print 'Stop condition received.'
             print 'Ending transfer!'
@@ -41,7 +42,6 @@ class Client:
 
         while True:
             (packet, ip, port) = self.__get_server_response(buffer_size)
-            num_packets_processed += 1
 
             #TODO it seems bad that different packet types have different interfaces
             if not packet.OPCODE == tftp.DataPacket.OPCODE:
@@ -52,13 +52,14 @@ class Client:
                 print 'Packet payload is invalid!'
                 print 'Aborting transfer!'
                 return False
-            if not self.__is_valid_block_number(packet, num_packets_processed):
+            if not packet.block_number == num_packets_processed+1:
                 print 'Received invalid block number!'
                 print 'Aborting transfer!'
                 return False
 
-            # print 'Sending ack response to block number %d' % num_packets_processed
-            self.__send_ack_response(num_packets_processed, server_ip, tid)
+            # print 'Sending ack response to block number %d' % packet.block_number
+            self.__send_ack_response(packet.block_number, server_ip, tid)
+            num_packets_processed += 1
 
             if packet.is_stop_condition():
                 print 'Stop condition received.'
