@@ -31,19 +31,21 @@ class TestClient:
         assert Client(mock_socket)
 
     '''
-    Client              Server
-    __________________________
-    Failure: ?  -->
+    Client                  Server
+    ______________________________
+    Failure: ?          -->
     '''
     @pytest.mark.skip(reason='Not yet sure how to test this')
     def test_read_request_client_fails_to_send(self, mock_socket):
         pass
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
-                <--     Failure: socket timeout
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Timeout
+    Abort
     '''
     def test_read_request_server_times_out(self, mock_socket):
         ### Setup
@@ -76,10 +78,12 @@ class TestClient:
         assert expected_args == mock_socket.sendto.call_args_list
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
-                <--     Failure: block number != 1
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data packet, block number > 1
+    Abort
     '''
     def test_read_request_server_returns_wrong_block_number(self, mock_socket):
         ### Setup
@@ -119,12 +123,14 @@ class TestClient:
         assert expected_args == mock_socket.sendto.call_args_list
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
-                <--     Failure: block number != 1
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data packet, block number == 0
+    Abort
     '''
-    def test_read_request_server_can_not_return_previous_block_number(self, mock_socket):
+    def test_read_request_server_can_not_return_block_number_zero(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -162,10 +168,12 @@ class TestClient:
         assert expected_args == mock_socket.sendto.call_args_list
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
-                <--     Failure: opcode != 3
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Not data packet: opcode != 3
+    Abort
     '''
     def test_read_request_server_returns_wrong_opcode(self, mock_socket):
         ### Setup
@@ -208,14 +216,14 @@ class TestClient:
         assert expected_args == mock_socket.sendto.call_args_list
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
-                <--     Data block 1 (1 byte of data)
-    Ack block 1 -->
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
 
-    Wait for retransmit
-                        Timeout
+    Read:               <-- Data block 1 (1 byte of data)
+    Write: Ack block 1  --> Received
+
+    Read:               <-- Timeout
     '''
     def test_single_block_success_smallest_payload(self, mock_socket):
         ### Setup
@@ -268,14 +276,14 @@ class TestClient:
         assert 2 == mock_socket.recvfrom.call_count
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
-                <--     Data block 1 (== 511 bytes of data)
-    Ack block 1 -->
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
 
-    Wait for retransmit
-                        Timeout
+    Read:               <-- Data block 1 (== 511 bytes of data)
+    Write: Ack block 1  --> Received
+
+    Read:               <-- Timeout
     '''
     def test_single_block_success_largest_payload(self, mock_socket):
         ### Setup
@@ -329,11 +337,12 @@ class TestClient:
         assert 2 == mock_socket.recvfrom.call_count
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
-                <--     Data block 1 (== 513 bytes of data)
-    Fail
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (== 513 bytes of data)
+    Abort
     '''
     def test_single_block_fails_if_payload_is_too_large(self, mock_socket):
         ### Setup
@@ -366,12 +375,13 @@ class TestClient:
     '''
     Client                  Server
     ______________________________
-    Write: Read request -->
-    Read:               <-- Data block 1 (== 511 bytes of data)
-    Write: Ack block 1  -->
-    Read:               <-- Data block 1 (== 511 bytes of data)
-    Write: Ack block 1  -->
-    Terminate
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (< 512 bytes of data)
+    Write: Ack block 1  --> Not received
+
+    Read:               <-- Data block 1 (< 512 bytes of data)
+    Write: Ack block 1  --> Does not matter
     '''
     def test_single_block_success_server_retransmits_packet(self, mock_socket):
         ### Setup
@@ -428,13 +438,16 @@ class TestClient:
     '''
     Client                  Server
     ______________________________
-    Write: Read Request -->
+    Write: Read Request --> Received
+
     Read:               <-- Data block 1 (== 512 bytes of data)
     Write: Ack block 1  -->
+
     Read:               <-- Failure: socket timeout
     Write: Ack block 1  -->
+
     Read:               <-- Failure: socket timeout
-    Terminate
+    Abort
     '''
     def test_second_block_server_times_out(self, mock_socket):
         ### Setup
@@ -496,14 +509,15 @@ class TestClient:
         assert expected_args == mock_socket.sendto.call_args_list
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
 
-                <--     Data block 1 (== 512 bytes of data)
-    Ack block 1 -->
+    Read:               <-- Data block 1 (== 512 bytes of data)
+    Write: Ack block 1  --> Received
 
-                <--     Failure: block number != 2
+    Read:               <-- Data packet, block number != 2
+    Abort
     '''
     def test_second_block_server_returns_wrong_block_number(self, mock_socket):
         ### Setup
@@ -555,14 +569,15 @@ class TestClient:
         assert expected_args == mock_socket.sendto.call_args_list
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
 
-                <--     Data block 1 (== 512 bytes of data)
-    Ack block 1 -->
+    Read:               <-- Data block 1 (== 512 bytes of data)
+    Write: Ack block 1  --> Received
 
-                <--     Failure: wrong opcode
+    Read:               <-- Not a data packet: wrong opcode
+    Abort
     '''
     def test_second_block_server_returns_wrong_opcode(self, mock_socket):
         ### Setup
@@ -620,15 +635,17 @@ class TestClient:
         assert expected_args == mock_socket.sendto.call_args_list
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
 
-                <--     Data block 1 (512 bytes of data)
-    Ack block 1 -->
+    Read:               <-- Data block 1 (512 bytes of data)
+    Write: Ack block 1  --> Received
 
-                <--     Data block 2 (0 bytes of data)
-    Ack block 2 -->
+    Read:               <-- Data block 2 (0 bytes of data)
+    Ack block 2         --> Received
+
+    Read:               <-- Timeout
     '''
     def test_second_block_success_empty_payload_ends_transmission(self, mock_socket):
         ### Setup
@@ -760,18 +777,18 @@ class TestClient:
         assert expected_args == mock_socket.sendto.call_args_list
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
 
-                <--     Data block 1 (512 bytes of data)
-    Ack block 1 -->     Server fails to receive ack
+    Read:               <-- Data block 1 (512 bytes of data)
+    Write: Ack block 1  --> Not received
 
-                <--     Resend data block 1 (512 byte of data)
-    Ack block 1 -->
+    Read:               <-- Data block 1 (512 byte of data)
+    Write: Ack block 1  --> Received
 
-                <--     Data block 2 (1 byte of data)
-    Ack block 2 -->
+    Read:               <-- Data block 2 (1 byte of data)
+    Write: Ack block 2  --> Received
     '''
     def test_two_blocks_server_resends_first_block(self, mock_socket):
         ### Setup
