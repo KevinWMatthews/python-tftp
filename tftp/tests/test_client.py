@@ -355,7 +355,6 @@ class TestClient:
                 <--     Failure: socket timeout
     Terminate
     '''
-    @pytest.mark.skip(reason="Refactoring code")
     def test_second_block_server_times_out(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'

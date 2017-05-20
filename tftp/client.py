@@ -10,6 +10,7 @@ class Client:
     def read(self, filename, ip, port):
         mode = 'octet'
         buffer_size = self.__get_buffer_size(self.block_size)
+        no_server_response = False
 
         self.__initiate_read_from_server(filename, mode, ip, port)
 
@@ -35,11 +36,19 @@ class Client:
 
         while True:
             (packet, port) = self.__get_server_response(buffer_size)
+            if packet.OPCODE == tftp.TimeoutPacket.OPCODE:
+                if no_server_response:
+                    print 'Server timed out twice!'
+                    print 'Aborting transfer'
+                    return False
+                else:
+                    self.__send_ack_response(last_block_number, ip, tid)
+                    no_server_response = True
+                    continue
             if not self.__is_valid_data_packet(packet):
                 print 'Invalid server response! Aborting transfer.'
                 return False
-
-            if packet.block_number == last_block_number+1:
+            elif packet.block_number == last_block_number+1:
                 last_block_number += 1
             elif packet.block_number == last_block_number:
                 print 'Server resent last packet'
@@ -70,7 +79,7 @@ class Client:
             received, (server_ip, tid) = self.socket.recvfrom(buffer_size)
         except timeout, msg:
             print 'Failed to receive from server: %s' % msg
-            return (tftp.InvalidPacket(), 0)
+            return (tftp.TimeoutPacket(), 0)
 
         packet = tftp.PacketParser.parse(received)
         return (packet, tid)
