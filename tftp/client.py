@@ -28,7 +28,6 @@ class Client:
         last_block_number = 1
         self.__send_ack_response(packet.block_number, server_ip, tid)
 
-        #TODO is this tested?
         if packet.is_stop_condition():
             print 'Stop condition received.'
             print 'Ending transfer!'
