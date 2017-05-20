@@ -36,7 +36,7 @@ class TestClient:
     Failure: ?  -->
     '''
     @pytest.mark.skip(reason='Not yet sure how to test this')
-    def test_client_fails_to_send_read_request(self, mock_socket):
+    def test_read_request_client_fails_to_send(self, mock_socket):
         pass
 
     '''
@@ -45,7 +45,7 @@ class TestClient:
     Read        -->
                 <--     Failure: socket timeout
     '''
-    def test_server_does_not_respond_to_read_request(self, mock_socket):
+    def test_read_request_server_times_out(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -81,7 +81,7 @@ class TestClient:
     Read        -->
                 <--     Failure: block number != 1
     '''
-    def test_server_returns_wrong_block_number_to_read_request(self, mock_socket):
+    def test_read_request_server_returns_wrong_block_number(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -124,7 +124,7 @@ class TestClient:
     Read        -->
                 <--     Failure: opcode != 3
     '''
-    def test_server_returns_wrong_opcode_to_read_request(self, mock_socket):
+    def test_read_request_server_returns_wrong_opcode(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -171,7 +171,7 @@ class TestClient:
                 <--     Data block 1 (1 byte of data)
     Ack block 1 -->
     '''
-    def test_successfully_transfer_smallest_single_block(self, mock_socket):
+    def test_single_block_success_smallest_payload(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -221,7 +221,7 @@ class TestClient:
                 <--     Data block 1 (== 511 bytes of data)
     Ack block 1 -->
     '''
-    def test_successfully_transfer_largest_single_block(self, mock_socket):
+    def test_single_block_success_largest_payload(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -264,6 +264,39 @@ class TestClient:
         assert 2 == mock_socket.sendto.call_count
         assert expected_args == mock_socket.sendto.call_args_list
 
+    '''
+    Client              Server
+    __________________________
+    Read        -->
+                <--     Data block 1 (== 513 bytes of data)
+    '''
+    def test_single_block_fails_if_payload_is_too_large(self, mock_socket):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        mode = 'octet'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        read_packet = ReadPacket(filename, mode)
+        read_string = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
+
+        # Server response - data packet
+        block_number = 1
+        data = create_random_data_string(MAX_DATA_SIZE+1)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response = create_socket_tuple(data_string, server_ip, tid)
+
+        # Set server response
+        mock_socket.recvfrom.side_effect = [server_response]
+
+        ### Test
+        client = Client(mock_socket)
+        assert False == client.read(filename, server_ip, server_port)
 
     '''
     Client              Server
@@ -279,7 +312,7 @@ class TestClient:
                 <--     Failure: socket timeout
     Terminate
     '''
-    def test_server_does_not_send_next_block(self, mock_socket):
+    def test_second_block_server_times_out(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -348,7 +381,7 @@ class TestClient:
 
                 <--     Failure: block number != 2
     '''
-    def test_server_returns_wrong_block_number_on_next_block(self, mock_socket):
+    def test_second_block_server_returns_wrong_block_number(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -407,7 +440,7 @@ class TestClient:
 
                 <--     Failure: wrong opcode
     '''
-    def test_server_returns_wrong_opcode_on_next_block(self, mock_socket):
+    def test_second_block_server_returns_wrong_opcode(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -473,7 +506,7 @@ class TestClient:
                 <--     Data block 2 (0 bytes of data)
     Ack block 2 -->
     '''
-    def test_largest_single_block_requires_an_empty_block_to_end_transmission(self, mock_socket):
+    def test_second_block_success_empty_payload_ends_transmission(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -543,7 +576,7 @@ class TestClient:
                 <--     Data block 2 (1 byte of data)
     Ack block 2 -->
     '''
-    def test_successfully_transfer_small_second_block(self, mock_socket):
+    def test_second_block_success_smallest_payload(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -606,40 +639,6 @@ class TestClient:
     Client              Server
     __________________________
     Read        -->
-                <--     Data block 1 (== 513 bytes of data)
-    '''
-    def test_client_fails_if_data_is_too_large(self, mock_socket):
-        ### Setup
-        server_ip = '127.0.0.1'
-        server_port = 69
-        filename = 'test.txt'
-        mode = 'octet'
-        tid = 12345                     # transmission id (port) is random?
-
-        ### Set expectations
-        # Client read request
-        read_packet = ReadPacket(filename, mode)
-        read_string = read_packet.network_string()
-        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
-
-        # Server response - data packet
-        block_number = 1
-        data = create_random_data_string(MAX_DATA_SIZE+1)
-        data_packet = DataPacket(block_number, data)
-        data_string = data_packet.network_string()
-        server_response = create_socket_tuple(data_string, server_ip, tid)
-
-        # Set server response
-        mock_socket.recvfrom.side_effect = [server_response]
-
-        ### Test
-        client = Client(mock_socket)
-        assert False == client.read(filename, server_ip, server_port)
-
-    '''
-    Client              Server
-    __________________________
-    Read        -->
 
                 <--     Data block 1 (512 bytes of data)
     Ack block 1 -->     Server fails to receive ack
@@ -650,7 +649,7 @@ class TestClient:
                 <--     Data block 2 (1 byte of data)
     Ack block 2 -->
     '''
-    def test_can_resend_last_packet(self, mock_socket):
+    def test_first_ack_fails_server_resends_first_block(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
