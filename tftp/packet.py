@@ -104,13 +104,26 @@ class ReadPacket:
 Not in the TFTP RFC.
 Implemented so the PacketParser can return an object that
 behaves like a packet but signals that it is not a valid packet.
-OPCODE = 0
+OPCODE = -1
 '''
 class InvalidPacket:
-    OPCODE = 0
+    OPCODE = -1
 
     def __init__(self, error_msg=''):
         self.error_msg = error_msg
+
+'''
+Not in the TFTP RFC.
+Implemented so the PacketParser can return an object that
+behaves like a packet but signals that it is not a valid packet.
+OPCODE = 0
+'''
+class TimeoutPacket:
+    OPCODE = 0
+
+    def __init__(self):
+        pass
+
 
 class PacketParser:
     @staticmethod

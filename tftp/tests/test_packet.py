@@ -1,4 +1,4 @@
-from tftp import AckPacket, ReadPacket, DataPacket, InvalidPacket, PacketParser
+from tftp import AckPacket, ReadPacket, DataPacket, TimeoutPacket, InvalidPacket, PacketParser
 import pytest
 
 from random import choice
@@ -7,7 +7,8 @@ from string import printable
 MAX_DATA_SIZE = 512
 MAX_BLOCK_NUMBER = 65535
 
-OPCODE_INVALID = 0
+OPCODE_INVALID = -1
+OPCODE_TIMEOUT = 0
 OPCODE_DATA  = 3
 OPCODE_ACK   = 4
 
@@ -115,6 +116,12 @@ class TestInvalidPacket:
         packet = InvalidPacket(error_msg=error_msg)
         assert OPCODE_INVALID == packet.OPCODE
         assert error_msg == packet.error_msg
+
+class TestTimeoutPacket:
+    def test_timeout_packet_has_opcode(self):
+        packet = TimeoutPacket()
+        assert OPCODE_TIMEOUT == packet.OPCODE
+
 
 class TestPacketParse:
     def test_parse_invalid_packet(self):
