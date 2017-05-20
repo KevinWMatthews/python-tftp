@@ -9,36 +9,41 @@ class Client:
 
     def read(self, filename, ip, port):
         mode = 'octet'
+        block_count = 0
+        buffer_size = self.__get_buffer_size(self.block_size)
+
         self.__initiate_read_from_server(filename, mode, ip, port)
 
-        buffer_size = self.__get_buffer_size(self.block_size)
-        block_count = 0
+        # The first packet is special only in that we save the TID
+        # for the rest of the transmission.
         (packet, server_ip, tid) = self.__get_server_response(buffer_size)
+        block_count += 1
+
         if not packet.OPCODE == tftp.DataPacket.OPCODE:
-            print 'Server error responding to read request!'
+            print 'Received wrong opcode!'
             print 'Aborting transfer!'
             return False
         if not packet.is_payload_valid():
             print 'Packet payload is invalid!'
             print 'Aborting transfer!'
             return False
+        if not self.__is_valid_block_number(packet, block_count):
+            print 'Received invalid block number!'
+            print 'Aborting transfer!'
+            return False
+
+        # print 'Sending ack response to block number %d' % block_count
+        self.__send_ack_response(block_count, server_ip, tid)
+
+        if packet.is_stop_condition():
+            print 'Stop condition received.'
+            print 'Ending transfer!'
+            return True
 
         while True:
+            (packet, ip, port) = self.__get_server_response(buffer_size)
             block_count += 1
 
-            if not self.__is_valid_block_number(packet, block_count):
-                print 'Received invalid block number!'
-                return False
-
-            # print 'Sending ack response to block number %d' % block_count
-            self.__send_ack_response(block_count, server_ip, tid)
-
-            if packet.is_stop_condition():
-                print 'Stop condition received.'
-                print 'Ending transfer!'
-                return True
-
-            (packet, ip, port) = self.__get_server_response(buffer_size)
             if packet.OPCODE == tftp.InvalidPacket.OPCODE:
                 self.__send_ack_response(block_count, server_ip, tid)
                 return False
@@ -50,6 +55,20 @@ class Client:
                 print 'Packet payload is invalid!'
                 print 'Aborting transfer!'
                 return False
+            if not self.__is_valid_block_number(packet, block_count):
+                print 'Received invalid block number!'
+                print 'Aborting transfer!'
+                return False
+
+            # print 'Sending ack response to block number %d' % block_count
+            self.__send_ack_response(block_count, server_ip, tid)
+
+            if packet.is_stop_condition():
+                print 'Stop condition received.'
+                print 'Ending transfer!'
+                return True
+
+
 
 
     def __initiate_read_from_server(self, filename, mode, ip, port):
