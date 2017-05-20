@@ -9,7 +9,7 @@ class Client:
 
     def read(self, filename, ip, port):
         mode = 'octet'
-        num_packets_processed = 0
+        last_block_number = 0
         buffer_size = self.__get_buffer_size(self.block_size)
 
         self.__initiate_read_from_server(filename, mode, ip, port)
@@ -31,7 +31,7 @@ class Client:
             print 'Aborting transfer!'
             return False
         # print 'Sending ack response to block number %d' % packet.block_number
-        num_packets_processed += 1
+        last_block_number += 1
         self.__send_ack_response(packet.block_number, server_ip, tid)
 
         #TODO is this tested?
@@ -53,14 +53,14 @@ class Client:
                 print 'Aborting transfer!'
                 return False
 
-            if packet.block_number == num_packets_processed:
+            if packet.block_number == last_block_number:
                 print 'Server resent last packet'
-            elif not packet.block_number == num_packets_processed+1:
+            elif not packet.block_number == last_block_number+1:
                 print 'Received invalid block number!'
                 print 'Aborting transfer!'
                 return False
             else:
-                num_packets_processed += 1
+                last_block_number += 1
 
             # print 'Sending ack response to block number %d' % packet.block_number
             self.__send_ack_response(packet.block_number, server_ip, tid)
@@ -95,13 +95,13 @@ class Client:
     def __is_valid_data_packet(self, packet):
         pass
 
-    def __is_valid_block_number(self, packet, num_packets_processed):
-        if packet.block_number == num_packets_processed:
+    def __is_valid_block_number(self, packet, last_block_number):
+        if packet.block_number == last_block_number:
             return True
         return False
 
-    def __is_packet_retry(self, packet, num_packets_processed):
-        if packet.block_number == num_packets_processed - 1:
+    def __is_packet_retry(self, packet, last_block_number):
+        if packet.block_number == last_block_number - 1:
             return True
         return False
 
