@@ -6,17 +6,17 @@ class Client:
     def __init__(self, socket):
         self.socket = socket
         self.block_size = 512
+        self.buffer_size = self.__get_buffer_size(self.block_size)
 
     def read(self, filename, ip, port):
         mode = 'octet'
-        buffer_size = self.__get_buffer_size(self.block_size)
         resent_packet = 0
 
         self.__initiate_read_from_server(filename, mode, ip, port)
 
         # The first packet is special only in that we save the TID
         # for the rest of the transmission.
-        (packet, tid) = self.__get_server_response(buffer_size)
+        (packet, tid) = self.__get_server_response(self.buffer_size)
         if not self.__is_valid_data_packet(packet):
             print 'Invalid server response! Aborting transfer.'
             return False
@@ -30,18 +30,12 @@ class Client:
         last_packet_received = packet
 
         if packet.is_stop_condition():
-            print 'Stop condition received. Waiting for retransmission...'
-            (packet, port) = self.__get_server_response(buffer_size)
-            if packet.OPCODE == tftp.TimeoutPacket.OPCODE:
-                print 'Transfer success!'
-            else:
-                print 'Server timed out! Resending final ack'
-                self.__send_ack_response(last_packet_received.block_number, ip, tid)
-                print 'Not dallying for another retransmission'
+            print 'Stop condition received. Checking for retransmission...'
+            self.__check_for_retransmission(ip, tid)
             return True
 
         while True:
-            (packet, port) = self.__get_server_response(buffer_size)
+            (packet, port) = self.__get_server_response(self.buffer_size)
             if packet.OPCODE == tftp.TimeoutPacket.OPCODE:
                 if last_packet_received == resent_packet:
                     print 'Server timed out twice.'
@@ -64,14 +58,8 @@ class Client:
             last_packet_received = packet
 
             if packet.is_stop_condition():
-                print 'Stop condition received. Waiting for retransmission...'
-                (packet, port) = self.__get_server_response(buffer_size)
-                if packet.OPCODE == tftp.TimeoutPacket.OPCODE:
-                    print 'Transfer success!'
-                else:
-                    print 'Server timed out! Resending final ack'
-                    self.__send_ack_response(last_packet_received.block_number, ip, tid)
-                    print 'Not dallying for another retransmission'
+                print 'Stop condition received. Checking for retransmission...'
+                self.__check_for_retransmission(ip, tid)
                 return True
 
 
@@ -112,3 +100,12 @@ class Client:
             print 'Packet payload is invalid!'
             return False
         return True
+
+    def __check_for_retransmission(self, server_ip, tid):
+        (packet, port) = self.__get_server_response(self.buffer_size)
+        if packet.OPCODE == tftp.TimeoutPacket.OPCODE:
+            print 'Transfer success!'
+        else:
+            print 'Server timed out! Resending final ack'
+            self.__send_ack_response(packet.block_number, server_ip, tid)
+            print 'Not dallying for another retransmission'
