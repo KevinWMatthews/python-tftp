@@ -31,8 +31,8 @@ class Client:
             print 'Aborting transfer!'
             return False
         # print 'Sending ack response to block number %d' % packet.block_number
-        self.__send_ack_response(packet.block_number, server_ip, tid)
         num_packets_processed += 1
+        self.__send_ack_response(packet.block_number, server_ip, tid)
 
         #TODO is this tested?
         if packet.is_stop_condition():
@@ -52,14 +52,18 @@ class Client:
                 print 'Packet payload is invalid!'
                 print 'Aborting transfer!'
                 return False
-            if not packet.block_number == num_packets_processed+1:
+
+            if packet.block_number == num_packets_processed:
+                print 'Server resent last packet'
+            elif not packet.block_number == num_packets_processed+1:
                 print 'Received invalid block number!'
                 print 'Aborting transfer!'
                 return False
+            else:
+                num_packets_processed += 1
 
             # print 'Sending ack response to block number %d' % packet.block_number
             self.__send_ack_response(packet.block_number, server_ip, tid)
-            num_packets_processed += 1
 
             if packet.is_stop_condition():
                 print 'Stop condition received.'
