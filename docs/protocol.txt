@@ -60,3 +60,9 @@ If the length of the data field is less than 512 bytes, the transmission is over
 It is best to test the length of the data field. If the packet length is < 516 bytes
 but the data field is 512 bytes, there is corruption in the opcode or block number.
 What if the packet is greater than 512 bytes? Might be a transmission error?
+
+After the final ack is sent, the client should "dally" and see if the server  missed the ack
+and needs to retransmit the final packet.
+The server that I have observed sends an invidual packet a maximum of two times.
+It will not send a third packet/retry a second time.
+(Verify this with other TFTP servers).

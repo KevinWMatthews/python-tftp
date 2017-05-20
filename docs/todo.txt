@@ -1,3 +1,5 @@
+Check number of calls to recvfrom!
+
 I am assuming that the server can not respond from another IP address. Verify this.
 Check TID of each response?
 Only allow the server to resend a packet once?
