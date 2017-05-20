@@ -122,6 +122,49 @@ class TestClient:
     Client              Server
     __________________________
     Read        -->
+                <--     Failure: block number != 1
+    '''
+    def test_read_request_server_can_not_return_previous_block_number(self, mock_socket):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        mode = 'octet'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        read_packet = ReadPacket(filename, mode)
+        read_request = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_request, server_ip, server_port)
+
+        # Server response
+        block_number = 0                # The 'previous block' is not valid for the first packet.
+        data = create_random_data_string(1)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response = create_socket_tuple(data_string, server_ip, tid)
+
+        # Set client expectations
+        # A list of: (<ordered arguments>, <empty_dictionary>)
+        expected_args = [
+            (read_request_args,),
+        ]
+        # Set server response
+        mock_socket.recvfrom.side_effect = [server_response]
+
+        ### Test
+        client = Client(mock_socket)
+        assert False == client.read(filename, server_ip, server_port)
+
+        ### Check expectations
+        assert 1 == mock_socket.sendto.call_count
+        assert expected_args == mock_socket.sendto.call_args_list
+
+    '''
+    Client              Server
+    __________________________
+    Read        -->
                 <--     Failure: opcode != 3
     '''
     def test_read_request_server_returns_wrong_opcode(self, mock_socket):
