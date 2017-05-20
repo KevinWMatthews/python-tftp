@@ -15,7 +15,7 @@ class Client:
 
         # The first packet is special only in that we save the TID
         # for the rest of the transmission.
-        (packet, server_ip, tid) = self.__get_server_response(buffer_size)
+        (packet, tid) = self.__get_server_response(buffer_size)
         if not self.__is_valid_data_packet(packet):
             print 'Invalid server response! Aborting transfer.'
             return False
@@ -26,7 +26,7 @@ class Client:
 
         # print 'Sending ack response to block number %d' % packet.block_number
         last_block_number = 1
-        self.__send_ack_response(packet.block_number, server_ip, tid)
+        self.__send_ack_response(packet.block_number, ip, tid)
 
         if packet.is_stop_condition():
             print 'Stop condition received.'
@@ -34,8 +34,7 @@ class Client:
             return True
 
         while True:
-            (packet, ip, port) = self.__get_server_response(buffer_size)
-
+            (packet, port) = self.__get_server_response(buffer_size)
             if not self.__is_valid_data_packet(packet):
                 print 'Invalid server response! Aborting transfer.'
                 return False
@@ -50,7 +49,7 @@ class Client:
                 return False
 
             # print 'Sending ack response to block number %d' % packet.block_number
-            self.__send_ack_response(packet.block_number, server_ip, tid)
+            self.__send_ack_response(packet.block_number, ip, tid)
 
             if packet.is_stop_condition():
                 print 'Stop condition received.'
@@ -71,10 +70,10 @@ class Client:
             received, (server_ip, tid) = self.socket.recvfrom(buffer_size)
         except timeout, msg:
             print 'Failed to receive from server: %s' % msg
-            return (tftp.InvalidPacket(), '', 0)
+            return (tftp.InvalidPacket(), 0)
 
         packet = tftp.PacketParser.parse(received)
-        return (packet, server_ip, tid)
+        return (packet, tid)
 
     def __send_ack_response(self, block_number, server_ip, tid):
         ack_packet = tftp.AckPacket(block_number)
