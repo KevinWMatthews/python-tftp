@@ -44,9 +44,6 @@ class Client:
             (packet, ip, port) = self.__get_server_response(buffer_size)
             block_count += 1
 
-            if packet.OPCODE == tftp.InvalidPacket.OPCODE:
-                self.__send_ack_response(block_count, server_ip, tid)
-                return False
             if not packet.OPCODE == tftp.DataPacket.OPCODE:
                 print 'Received wrong opcode!'
                 print 'Aborting transfer!'
