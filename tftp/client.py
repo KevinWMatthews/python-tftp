@@ -9,7 +9,7 @@ class Client:
 
     def read(self, filename, ip, port):
         mode = 'octet'
-        block_count = 0
+        num_packets_processed = 0
         buffer_size = self.__get_buffer_size(self.block_size)
 
         self.__initiate_read_from_server(filename, mode, ip, port)
@@ -26,13 +26,13 @@ class Client:
             print 'Packet payload is invalid!'
             print 'Aborting transfer!'
             return False
-        if not packet.block_number == block_count+1:
+        if not packet.block_number == num_packets_processed+1:
             print 'Received invalid block number!'
             print 'Aborting transfer!'
             return False
-        block_count += 1
-        # print 'Sending ack response to block number %d' % block_count
-        self.__send_ack_response(block_count, server_ip, tid)
+        num_packets_processed += 1
+        # print 'Sending ack response to block number %d' % num_packets_processed
+        self.__send_ack_response(num_packets_processed, server_ip, tid)
 
         if packet.is_stop_condition():
             print 'Stop condition received.'
@@ -41,7 +41,7 @@ class Client:
 
         while True:
             (packet, ip, port) = self.__get_server_response(buffer_size)
-            block_count += 1
+            num_packets_processed += 1
 
             #TODO it seems bad that different packet types have different interfaces
             if not packet.OPCODE == tftp.DataPacket.OPCODE:
@@ -52,13 +52,13 @@ class Client:
                 print 'Packet payload is invalid!'
                 print 'Aborting transfer!'
                 return False
-            if not self.__is_valid_block_number(packet, block_count):
+            if not self.__is_valid_block_number(packet, num_packets_processed):
                 print 'Received invalid block number!'
                 print 'Aborting transfer!'
                 return False
 
-            # print 'Sending ack response to block number %d' % block_count
-            self.__send_ack_response(block_count, server_ip, tid)
+            # print 'Sending ack response to block number %d' % num_packets_processed
+            self.__send_ack_response(num_packets_processed, server_ip, tid)
 
             if packet.is_stop_condition():
                 print 'Stop condition received.'
@@ -90,13 +90,13 @@ class Client:
     def __is_valid_data_packet(self, packet):
         pass
 
-    def __is_valid_block_number(self, packet, block_count):
-        if packet.block_number == block_count:
+    def __is_valid_block_number(self, packet, num_packets_processed):
+        if packet.block_number == num_packets_processed:
             return True
         return False
 
-    def __is_packet_retry(self, packet, block_count):
-        if packet.block_number == block_count - 1:
+    def __is_packet_retry(self, packet, num_packets_processed):
+        if packet.block_number == num_packets_processed - 1:
             return True
         return False
 
