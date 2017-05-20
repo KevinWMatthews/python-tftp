@@ -1,0 +1,15 @@
+    Client              Server
+    __________________________
+    Read        -->
+
+                <--     Data block 1 (512 bytes of data)
+    Ack block 1 -->     Server fails to receive ack
+
+                <--     Resend data block 1 (512 byte of data)
+    Ack block 1 -->     Server receives ack
+
+                <--     Data block 2 (1 byte of data)
+    Ack block 2 -->     Server fails to receives ack
+
+                <--     Data block 2 (1 byte of data)
+    Ack block 2 -->     Server receives ack
