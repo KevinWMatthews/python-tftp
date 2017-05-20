@@ -16,19 +16,14 @@ class Client:
         # The first packet is special only in that we save the TID
         # for the rest of the transmission.
         (packet, server_ip, tid) = self.__get_server_response(buffer_size)
-        #TODO it seems bad that different packet types have different interfaces
-        if not packet.OPCODE == tftp.DataPacket.OPCODE:
-            print 'Received wrong opcode!'
-            print 'Aborting transfer!'
-            return False
-        if not packet.is_payload_valid():
-            print 'Packet payload is invalid!'
-            print 'Aborting transfer!'
+        if not self.__is_valid_data_packet(packet):
+            print 'Invalid server response! Aborting transfer.'
             return False
         if not packet.block_number == 1:
             print 'Received invalid block number!'
             print 'Aborting transfer!'
             return False
+
         # print 'Sending ack response to block number %d' % packet.block_number
         last_block_number = 1
         self.__send_ack_response(packet.block_number, server_ip, tid)
@@ -42,14 +37,8 @@ class Client:
         while True:
             (packet, ip, port) = self.__get_server_response(buffer_size)
 
-            #TODO it seems bad that different packet types have different interfaces
-            if not packet.OPCODE == tftp.DataPacket.OPCODE:
-                print 'Received wrong opcode!'
-                print 'Aborting transfer!'
-                return False
-            if not packet.is_payload_valid():
-                print 'Packet payload is invalid!'
-                print 'Aborting transfer!'
+            if not self.__is_valid_data_packet(packet):
+                print 'Invalid server response! Aborting transfer.'
                 return False
 
             if packet.block_number == last_block_number+1:
@@ -97,3 +86,13 @@ class Client:
         opcode_length = 2
         block_number_length = 2
         return opcode_length + block_number_length + block_size
+
+    def __is_valid_data_packet(self, packet):
+        #TODO it seems bad that different packet types have different interfaces
+        if not packet.OPCODE == tftp.DataPacket.OPCODE:
+            print 'Received wrong opcode!'
+            return False
+        if not packet.is_payload_valid():
+            print 'Packet payload is invalid!'
+            return False
+        return True
