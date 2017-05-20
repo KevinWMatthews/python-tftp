@@ -225,7 +225,7 @@ class TestClient:
 
     Read:               <-- Timeout
     '''
-    def test_single_block_success_smallest_payload(self, mock_socket):
+    def test_one_block_success_smallest_payload(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -285,7 +285,7 @@ class TestClient:
 
     Read:               <-- Timeout
     '''
-    def test_single_block_success_largest_payload(self, mock_socket):
+    def test_one_block_success_largest_payload(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -341,49 +341,13 @@ class TestClient:
     ______________________________
     Write: Read request --> Received
 
-    Read:               <-- Data block 1 (== 513 bytes of data)
-    Abort
-    '''
-    def test_single_block_fails_if_payload_is_too_large(self, mock_socket):
-        ### Setup
-        server_ip = '127.0.0.1'
-        server_port = 69
-        filename = 'test.txt'
-        mode = 'octet'
-        tid = 12345                     # transmission id (port) is random?
-
-        ### Set expectations
-        # Client read request
-        read_packet = ReadPacket(filename, mode)
-        read_string = read_packet.network_string()
-        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
-
-        # Server response - data packet
-        block_number = 1
-        data = create_random_data_string(MAX_DATA_SIZE+1)
-        data_packet = DataPacket(block_number, data)
-        data_string = data_packet.network_string()
-        server_response = create_socket_tuple(data_string, server_ip, tid)
-
-        # Set server response
-        mock_socket.recvfrom.side_effect = [server_response]
-
-        ### Test
-        client = Client(mock_socket)
-        assert False == client.read(filename, server_ip, server_port)
-
-    '''
-    Client                  Server
-    ______________________________
-    Write: Read request --> Received
-
     Read:               <-- Data block 1 (< 512 bytes of data)
     Write: Ack block 1  --> Not received
 
     Read:               <-- Data block 1 (< 512 bytes of data)
     Write: Ack block 1  --> Does not matter
     '''
-    def test_single_block_success_server_retransmits_packet(self, mock_socket):
+    def test_one_block_success_server_retransmits_packet(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -438,6 +402,42 @@ class TestClient:
     '''
     Client                  Server
     ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (== 513 bytes of data)
+    Abort
+    '''
+    def test_one_block_fails_if_payload_is_too_large(self, mock_socket):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        mode = 'octet'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        read_packet = ReadPacket(filename, mode)
+        read_string = read_packet.network_string()
+        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
+
+        # Server response - data packet
+        block_number = 1
+        data = create_random_data_string(MAX_DATA_SIZE+1)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        server_response = create_socket_tuple(data_string, server_ip, tid)
+
+        # Set server response
+        mock_socket.recvfrom.side_effect = [server_response]
+
+        ### Test
+        client = Client(mock_socket)
+        assert False == client.read(filename, server_ip, server_port)
+
+    '''
+    Client                  Server
+    ______________________________
     Write: Read Request --> Received
 
     Read:               <-- Data block 1 (== 512 bytes of data)
@@ -449,7 +449,7 @@ class TestClient:
     Read:               <-- Failure: socket timeout
     Abort
     '''
-    def test_second_block_server_times_out(self, mock_socket):
+    def test_two_blocks_server_times_out(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -519,7 +519,7 @@ class TestClient:
     Read:               <-- Data packet, block number != 2
     Abort
     '''
-    def test_second_block_server_returns_wrong_block_number(self, mock_socket):
+    def test_two_blocks_server_returns_wrong_block_number(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -579,7 +579,7 @@ class TestClient:
     Read:               <-- Not a data packet: wrong opcode
     Abort
     '''
-    def test_second_block_server_returns_wrong_opcode(self, mock_socket):
+    def test_two_blocks_server_returns_wrong_opcode(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -647,7 +647,7 @@ class TestClient:
 
     Read:               <-- Timeout
     '''
-    def test_second_block_success_empty_payload_ends_transmission(self, mock_socket):
+    def test_two_blocks_success_empty_payload_ends_transmission(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -685,6 +685,9 @@ class TestClient:
         ack_string = ack_packet.network_string()
         client_ack_2_args = create_socket_tuple(ack_string, server_ip, tid)
 
+        # Server does not retransmit last packet
+        server_response_3 = socket.timeout
+
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
@@ -695,7 +698,8 @@ class TestClient:
         # Set server response
         mock_socket.recvfrom.side_effect = [
             server_response_1,
-            server_response_2
+            server_response_2,
+            server_response_3,
         ]
 
         ### Test
@@ -704,20 +708,23 @@ class TestClient:
 
         ### Check expectations
         assert 3 == mock_socket.sendto.call_count
+        assert 3 == mock_socket.recvfrom.call_count
         assert expected_args == mock_socket.sendto.call_args_list
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
 
-                <--     Data block 1 (512 bytes of data)
-    Ack block 1 -->
+    Read:               <-- Data block 1 (512 bytes of data)
+    Write: Ack block 1  --> Received
 
-                <--     Data block 2 (1 byte of data)
-    Ack block 2 -->
+    Read:               <-- Data block 2 (1 byte of data)
+    Write:Ack block 2   --> Received
+
+    Read:               --> Timeout
     '''
-    def test_second_block_success_smallest_payload(self, mock_socket):
+    def test_two_blocks_success_smallest_payload(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -755,6 +762,9 @@ class TestClient:
         ack_string = ack_packet.network_string()
         client_ack_2_args = create_socket_tuple(ack_string, server_ip, tid)
 
+        # Server does not retransmit last packet
+        server_response_3 = socket.timeout
+
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
@@ -765,7 +775,8 @@ class TestClient:
         # Set server response
         mock_socket.recvfrom.side_effect = [
             server_response_1,
-            server_response_2
+            server_response_2,
+            server_response_3,
         ]
 
         ### Test
@@ -789,8 +800,10 @@ class TestClient:
 
     Read:               <-- Data block 2 (1 byte of data)
     Write: Ack block 2  --> Received
+
+    Read:               <-- Timeout
     '''
-    def test_two_blocks_server_resends_first_block(self, mock_socket):
+    def test_two_blocks_success_server_resends_first_block(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -833,6 +846,9 @@ class TestClient:
         ack_string = ack_packet.network_string()
         client_ack_2_args = create_socket_tuple(ack_string, server_ip, tid)
 
+        # Server does not retransmit last packet
+        server_response_3 = socket.timeout
+
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
@@ -846,6 +862,7 @@ class TestClient:
             server_response_1,
             server_response_1,
             server_response_2,
+            server_response_3,
         ]
 
         ### Test
@@ -857,24 +874,25 @@ class TestClient:
         assert expected_args == mock_socket.sendto.call_args_list
 
     '''
-    Client              Server
-    __________________________
-    Read        -->
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
 
-                <--     Data block 1 (512 bytes of data)
-    Ack block 1 -->     Server fails to receive ack
+    Read:               <-- Data block 1 (512 bytes of data)
+    Write: Ack block 1  --> Not received
 
-                <--     Resend data block 1 (512 byte of data)
-    Ack block 1 -->     Server receives ack
+    Read:               <-- Resend data block 1 (512 byte of data)
+    Write: Ack block 1  --> Received
 
-                <--     Data block 2 (1 byte of data)
-    Ack block 2 -->     Server fails to receives ack
+    Read:               <-- Data block 2 (1 byte of data)
+    Write: Ack block 2  --> Not received
 
-                <--     Data block 2 (1 byte of data)
-    Ack block 2 -->     Server receives ack
+    Read:               <-- Data block 2 (1 byte of data)
+    Write: Ack block 2  --> Does not matter
+
+    Terminate
     '''
-    @pytest.mark.skip()
-    def test_two_blocks_server_resends_both_blocks(self, mock_socket):
+    def test_two_blocks_success_server_resends_first_and_final_blocks(self, mock_socket):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -917,6 +935,9 @@ class TestClient:
         ack_string = ack_packet.network_string()
         client_ack_2_args = create_socket_tuple(ack_string, server_ip, tid)
 
+        # Server does not retransmit last packet
+        server_response_3 = socket.timeout
+
         # Set client expectations
         # A list of: (<ordered arguments>, <empty_dictionary>)
         expected_args = [
@@ -932,6 +953,7 @@ class TestClient:
             server_response_1,
             server_response_2,
             server_response_2,
+            server_response_3,
         ]
 
         ### Test
@@ -940,6 +962,7 @@ class TestClient:
 
         ### Check expectations
         assert 5 == mock_socket.sendto.call_count
+        assert 4 == mock_socket.recvfrom.call_count
         assert expected_args == mock_socket.sendto.call_args_list
 
     @pytest.mark.skip('todo')

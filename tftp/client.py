@@ -64,8 +64,14 @@ class Client:
             last_packet_received = packet
 
             if packet.is_stop_condition():
-                print 'Stop condition received.'
-                print 'Ending transfer!'
+                print 'Stop condition received. Waiting for retransmission...'
+                (packet, port) = self.__get_server_response(buffer_size)
+                if packet.OPCODE == tftp.TimeoutPacket.OPCODE:
+                    print 'Transfer success!'
+                else:
+                    print 'Server timed out! Resending final ack'
+                    self.__send_ack_response(last_packet_received.block_number, ip, tid)
+                    print 'Not dallying for another retransmission'
                 return True
 
 
