@@ -19,6 +19,13 @@ def create_random_data_string(n_bytes):
     random_chars = (choice(printable) for i in range(n_bytes))
     return ''.join(random_chars)
 
+def expect_sendto_call(args_list, args):
+    # Mock objects keep a list of call arguments.
+    # This list is of the form: (<ordered arguments>, <keyword arguments>)
+    args_list.append( (args,) )     # Assume no keyword arguments
+
+def expect_recvfrom_call(side_effects_list, side_effect):
+    side_effects_list.append(side_effect)
 
 class TestClient:
 
@@ -234,45 +241,47 @@ class TestClient:
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
-        # Client read request
+        sendto_args_list = []
+        # Return value/server response
+        recvfrom_side_effects = []
+
+        # Expect Client read request
         read_packet = ReadPacket(filename, mode)
         read_request = read_packet.network_string()
         read_request_args = create_socket_tuple(read_request, server_ip, server_port)
+        expect_sendto_call(sendto_args_list, read_request_args)
 
-        # Server response - data packet
+        # Expect Server response - data packet
         block_number = 1
         data = create_random_data_string(1)
         data_packet = DataPacket(block_number, data)
         data_string = data_packet.network_string()
         server_response_1 = create_socket_tuple(data_string, server_ip, tid)
+        expect_recvfrom_call(recvfrom_side_effects, server_response_1)
 
-        # Client ack response
+        # Expect Client ack response
         ack_packet = AckPacket(block_number)
         ack_string = ack_packet.network_string()
         ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
+        expect_sendto_call(sendto_args_list, ack_packet_args)
 
-        # Server does not retransmit last packet
+        # Expect Server times out/does not retransmit last packet
         server_response_2 = socket.timeout
+        expect_recvfrom_call(recvfrom_side_effects, server_response_2)
 
-        # Set client expectations
-        # A list of: (<ordered arguments>, <empty_dictionary>)
-        expected_args = [
-            (read_request_args,),
-            (ack_packet_args,),
-        ]
-        # Set server response
-        mock_socket.recvfrom.side_effect = [
-            server_response_1,
-            server_response_2,
-        ]
+        # Set side effects
+        mock_socket.recvfrom.side_effect = recvfrom_side_effects
 
         ### Test
         client = Client(mock_socket)
         assert True == client.read(filename, server_ip, server_port)
 
         ### Check expectations
+        # sendto
         assert 2 == mock_socket.sendto.call_count
-        assert expected_args == mock_socket.sendto.call_args_list
+        assert sendto_args_list == mock_socket.sendto.call_args_list
+
+        # recvfrom
         assert 2 == mock_socket.recvfrom.call_count
 
     '''
