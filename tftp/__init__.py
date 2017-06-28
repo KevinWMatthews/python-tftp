@@ -1,4 +1,5 @@
 from .client import Client
+from .client import Client2
 from .packet import AckPacket
 from .packet import ReadPacket
 from .packet import DataPacket

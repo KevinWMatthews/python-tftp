@@ -1,4 +1,4 @@
-from tftp import Client, ReadPacket, DataPacket, AckPacket
+from tftp import Client, Client2, ReadPacket, DataPacket, AckPacket
 import pytest
 import mock
 import socket
@@ -82,7 +82,7 @@ class TestClient:
         mock_socket.recvfrom.side_effect = socket.timeout
 
         ### Test
-        client = Client(mock_socket)
+        client = Client2(mock_socket)
         assert False == client.read(filename, server_ip, server_port)
 
         ### Check expectations
