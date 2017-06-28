@@ -360,67 +360,9 @@ class TestClient:
     Read:               <-- Data block 1 (< 512 bytes of data)
     Write: Ack block 1  --> Does not matter
     '''
-    def test_one_block_success_server_retransmits_packet(self, mock_socket):
-        ### Setup
-        server_ip = '127.0.0.1'
-        server_port = 69
-        filename = 'test.txt'
-        mode = 'octet'
-        tid = 12345                     # transmission id (port) is random?
-
-        ### Set expectations
-        # Client read request
-        read_packet = ReadPacket(filename, mode)
-        read_request = read_packet.network_string()
-        read_request_args = create_socket_tuple(read_request, server_ip, server_port)
-
-        # Server response - data packet
-        block_number = 1
-        data = create_random_data_string(1)
-        data_packet = DataPacket(block_number, data)
-        data_string = data_packet.network_string()
-        server_response_1 = create_socket_tuple(data_string, server_ip, tid)
-
-        # Client ack response
-        ack_packet = AckPacket(block_number)
-        ack_string = ack_packet.network_string()
-        ack_packet_args = create_socket_tuple(ack_string, server_ip, tid)
-
-        # Server does not retransmit last packet
-        server_response_2 = socket.timeout
-
-        # Set client expectations
-        # A list of: (<ordered arguments>, <empty_dictionary>)
-        expected_args = [
-            (read_request_args,),
-            (ack_packet_args,),
-            (ack_packet_args,),
-        ]
-        # Set server response
-        mock_socket.recvfrom.side_effect = [
-            server_response_1,
-            server_response_1,
-            server_response_2,
-        ]
-
-        ### Test
-        client = Client(mock_socket)
-        assert True == client.read(filename, server_ip, server_port)
-
-        ### Check expectations
-        assert 3 == mock_socket.sendto.call_count
-        assert expected_args == mock_socket.sendto.call_args_list
-        assert 2 == mock_socket.recvfrom.call_count
-
-    '''
-    Client                  Server
-    ______________________________
-    Write: Read request --> Received
-
-    Read:               <-- Data block 1 (== 513 bytes of data)
-    Abort
-    '''
-    def test_one_block_fails_if_payload_is_too_large(self, mock_socket):
+    @mock.patch('socket.socket.recvfrom')
+    @mock.patch('socket.socket.sendto')
+    def test_one_block_success_server_retransmits_packet(self, mock_sendto, mock_recvfrom):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -432,21 +374,88 @@ class TestClient:
         # Client read request
         read_packet = ReadPacket(filename, mode)
         read_string = read_packet.network_string()
-        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
+        sendto_read_request = mock.call( read_string, (server_ip, server_port) )
+
+        # Server response - data packet
+        block_number = 1
+        data = create_random_data_string(1)
+        data_packet = DataPacket(block_number, data)
+        data_string = data_packet.network_string()
+        recvfrom_data_packet = create_socket_tuple(data_string, server_ip, tid)
+
+        # Client ack response
+        ack_packet = AckPacket(block_number)
+        ack_string = ack_packet.network_string()
+        sendto_ack_response = mock.call( ack_string, (server_ip, tid) )
+
+        # Server does not retransmit last packet
+        recvfrom_timeout = socket.timeout
+
+        # Set sendto expectations
+        sendto_calls = [
+            sendto_read_request,
+            sendto_ack_response,
+            sendto_ack_response,
+        ]
+
+        # Set recvfrom responses/side effects
+        mock_recvfrom.side_effect = [
+            recvfrom_data_packet,
+            recvfrom_data_packet,
+            recvfrom_timeout        # This would be returned but the Client will not wait and read again
+        ]
+
+        ### Test
+        client = Client2()
+        assert True == client.read(filename, server_ip, server_port)
+        assert sendto_calls == mock_sendto.mock_calls
+        assert 2 == mock_recvfrom.call_count
+
+    '''
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (== 513 bytes of data)
+    Abort
+    '''
+    @mock.patch('socket.socket.recvfrom')
+    @mock.patch('socket.socket.sendto')
+    def test_one_block_fails_if_payload_is_too_large(self, mock_sendto, mock_recvfrom):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        mode = 'octet'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        read_packet = ReadPacket(filename, mode)
+        read_string = read_packet.network_string()
+        sendto_read_request = mock.call( read_string, (server_ip, server_port) )
 
         # Server response - data packet
         block_number = 1
         data = create_random_data_string(MAX_DATA_SIZE+1)
         data_packet = DataPacket(block_number, data)
         data_string = data_packet.network_string()
-        server_response = create_socket_tuple(data_string, server_ip, tid)
+        recvfrom_data_packet = create_socket_tuple(data_string, server_ip, tid)
+
+        # Set sendto expectations
+        sendto_calls = [
+            sendto_read_request,
+        ]
 
         # Set server response
-        mock_socket.recvfrom.side_effect = [server_response]
+        mock_recvfrom.side_effect = [
+            recvfrom_data_packet,
+        ]
 
         ### Test
-        client = Client(mock_socket)
+        client = Client2()
         assert False == client.read(filename, server_ip, server_port)
+        assert 1 == mock_recvfrom.call_count
 
     '''
     Client                  Server
