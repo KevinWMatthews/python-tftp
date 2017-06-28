@@ -1,5 +1,5 @@
 import tftp
-from socket import timeout
+from socket import timeout, socket
 import struct
 
 class Client:
@@ -111,8 +111,7 @@ class Client:
             print 'Not dallying for another retransmission'
 
 class Client2:
-    def __init__(self, socket):
-        self.socket = socket
+    def __init__(self):
         self.block_size = 512
         self.buffer_size = self.__get_buffer_size(self.block_size)
 
@@ -174,14 +173,14 @@ class Client2:
     def __initiate_read_from_server(self, filename, mode, ip, port):
         read_packet = tftp.ReadPacket(filename, mode)
         read_string = read_packet.network_string()
-        self.socket.sendto(read_string, (ip, port))
+        socket.sendto(read_string, (ip, port))
 
     def __get_server_response(self, buffer_size):
         try:
             # This returns two tuples, nested:
             #   (packet, (ip, port))
             # The Transmission ID is the response port that the server chooses.
-            received, (server_ip, tid) = self.socket.recvfrom(buffer_size)
+            received, (server_ip, tid) = socket.recvfrom(buffer_size)
         except timeout, msg:
             print 'Failed to receive from server: %s' % msg
             return (tftp.TimeoutPacket(), 0)
@@ -192,7 +191,7 @@ class Client2:
     def __send_ack_response(self, block_number, server_ip, tid):
         ack_packet = tftp.AckPacket(block_number)
         ack_string = ack_packet.network_string()
-        self.socket.sendto(ack_string, (server_ip, tid))
+        socket.sendto(ack_string, (server_ip, tid))
 
     def __get_buffer_size(self, block_size):
         opcode_length = 2

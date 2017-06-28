@@ -59,7 +59,9 @@ class TestClient:
     Read:               <-- Timeout
     Abort
     '''
-    def test_read_request_server_times_out(self, mock_socket):
+    @mock.patch('socket.socket.sendto')
+    @mock.patch('socket.socket.recvfrom')
+    def test_read_request_server_times_out(self, mock_recvfrom, mock_sendto):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -70,24 +72,17 @@ class TestClient:
         # Client read request
         read_packet = ReadPacket(filename, mode)
         read_string = read_packet.network_string()
-        read_request_args = create_socket_tuple(read_string, server_ip, server_port)
-
-        # Set client expectations
-        # A list of: (<ordered arguments>, <empty_dictionary>)
-        expected_args = [
-            (read_request_args,),
-        ]
 
         # Server response
-        mock_socket.recvfrom.side_effect = socket.timeout
+        mock_recvfrom.side_effect = socket.timeout
 
         ### Test
-        client = Client2(mock_socket)
+        client = Client2()
         assert False == client.read(filename, server_ip, server_port)
 
         ### Check expectations
-        assert 1 == mock_socket.sendto.call_count
-        assert expected_args == mock_socket.sendto.call_args_list
+        assert 1 == mock_sendto.call_count
+        mock_sendto.assert_called_with( read_string, (server_ip, server_port) )
 
     '''
     Client                  Server
