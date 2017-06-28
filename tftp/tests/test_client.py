@@ -59,9 +59,9 @@ class TestClient:
     Read:               <-- Timeout
     Abort
     '''
-    @mock.patch('socket.socket.sendto')
     @mock.patch('socket.socket.recvfrom')
-    def test_read_request_server_times_out(self, mock_recvfrom, mock_sendto):
+    @mock.patch('socket.socket.sendto')
+    def test_read_request_server_times_out(self, mock_sendto, mock_recvfrom):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -92,7 +92,9 @@ class TestClient:
     Read:               <-- Data packet, block number > 1
     Abort
     '''
-    def test_read_request_server_returns_wrong_block_number(self, mock_socket):
+    @mock.patch('socket.socket.recvfrom')
+    @mock.patch('socket.socket.sendto')
+    def test_read_request_server_returns_wrong_block_number(self, mock_sendto, mock_recvfrom):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -103,8 +105,7 @@ class TestClient:
         ### Set expectations
         # Client read request
         read_packet = ReadPacket(filename, mode)
-        read_request = read_packet.network_string()
-        read_request_args = create_socket_tuple(read_request, server_ip, server_port)
+        read_string = read_packet.network_string()
 
         # Server response
         block_number = 2                # Should be block number 1 but isn't
@@ -113,21 +114,16 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response = create_socket_tuple(data_string, server_ip, tid)
 
-        # Set client expectations
-        # A list of: (<ordered arguments>, <empty_dictionary>)
-        expected_args = [
-            (read_request_args,),
-        ]
         # Set server response
-        mock_socket.recvfrom.side_effect = [server_response]
+        mock_recvfrom.side_effect = [server_response]
 
         ### Test
-        client = Client(mock_socket)
+        client = Client2()
         assert False == client.read(filename, server_ip, server_port)
 
         ### Check expectations
-        assert 1 == mock_socket.sendto.call_count
-        assert expected_args == mock_socket.sendto.call_args_list
+        assert 1 == mock_sendto.call_count
+        mock_sendto.assert_called_with( read_string, (server_ip, server_port) )
 
     '''
     Client                  Server
@@ -137,7 +133,9 @@ class TestClient:
     Read:               <-- Data packet, block number == 0
     Abort
     '''
-    def test_read_request_server_can_not_return_block_number_zero(self, mock_socket):
+    @mock.patch('socket.socket.recvfrom')
+    @mock.patch('socket.socket.sendto')
+    def test_read_request_server_can_not_return_block_number_zero(self, mock_sendto, mock_recvfrom):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -148,8 +146,7 @@ class TestClient:
         ### Set expectations
         # Client read request
         read_packet = ReadPacket(filename, mode)
-        read_request = read_packet.network_string()
-        read_request_args = create_socket_tuple(read_request, server_ip, server_port)
+        read_string = read_packet.network_string()
 
         # Server response
         block_number = 0                # The 'previous block' is not valid for the first packet.
@@ -158,21 +155,16 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response = create_socket_tuple(data_string, server_ip, tid)
 
-        # Set client expectations
-        # A list of: (<ordered arguments>, <empty_dictionary>)
-        expected_args = [
-            (read_request_args,),
-        ]
         # Set server response
-        mock_socket.recvfrom.side_effect = [server_response]
+        mock_recvfrom.side_effect = [server_response]
 
         ### Test
-        client = Client(mock_socket)
+        client = Client2()
         assert False == client.read(filename, server_ip, server_port)
 
         ### Check expectations
-        assert 1 == mock_socket.sendto.call_count
-        assert expected_args == mock_socket.sendto.call_args_list
+        assert 1 == mock_sendto.call_count
+        mock_sendto.assert_called_with( read_string, (server_ip, server_port) )
 
     '''
     Client                  Server
@@ -182,7 +174,9 @@ class TestClient:
     Read:               <-- Not data packet: opcode != 3
     Abort
     '''
-    def test_read_request_server_returns_wrong_opcode(self, mock_socket):
+    @mock.patch('socket.socket.recvfrom')
+    @mock.patch('socket.socket.sendto')
+    def test_read_request_server_returns_wrong_opcode(self, mock_sendto, mock_recvfrom):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -193,8 +187,7 @@ class TestClient:
         ### Set expectations
         # Client read request
         read_packet = ReadPacket(filename, mode)
-        read_request = read_packet.network_string()
-        read_request_args = create_socket_tuple(read_request, server_ip, server_port)
+        read_string = read_packet.network_string()
 
         # Server response
         opcode = AckPacket.OPCODE       # Will set the wrong opcode
@@ -206,21 +199,16 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response = create_socket_tuple(data_string, server_ip, tid)
 
-        # Set client expectations
-        # A list of: (<ordered arguments>, <empty_dictionary>)
-        expected_args = [
-            (read_request_args,),
-        ]
         # Set server response
-        mock_socket.recvfrom = mock.Mock(return_value = server_response)
+        mock_recvfrom.side_effect = [server_response]
 
         ### Test
-        client = Client(mock_socket)
+        client = Client2()
         assert False == client.read(filename, server_ip, server_port)
 
         ### Check expectations
-        assert 1 == mock_socket.sendto.call_count
-        assert expected_args == mock_socket.sendto.call_args_list
+        assert 1 == mock_sendto.call_count
+        mock_sendto.assert_called_with( read_string, (server_ip, server_port) )
 
     '''
     Client                  Server
