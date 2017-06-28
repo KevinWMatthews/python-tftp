@@ -72,17 +72,23 @@ class TestClient:
         # Client read request
         read_packet = ReadPacket(filename, mode)
         read_string = read_packet.network_string()
+        sendto_call_1 = mock.call( read_string, (server_ip, server_port) )
+
+        # Set sendto expectations
+        sendto_calls = [
+            sendto_call_1
+        ]
 
         # Server response
-        mock_recvfrom.side_effect = socket.timeout
+        mock_recvfrom.side_effect = [
+            socket.timeout
+        ]
 
         ### Test
         client = Client2()
         assert False == client.read(filename, server_ip, server_port)
-
-        ### Check expectations
-        assert 1 == mock_sendto.call_count
-        mock_sendto.assert_called_with( read_string, (server_ip, server_port) )
+        assert sendto_calls == mock_sendto.mock_calls
+        assert 1 == mock_recvfrom.call_count
 
     '''
     Client                  Server
@@ -106,6 +112,7 @@ class TestClient:
         # Client read request
         read_packet = ReadPacket(filename, mode)
         read_string = read_packet.network_string()
+        sendto_call_1 = mock.call( read_string, (server_ip, server_port) )
 
         # Server response
         block_number = 2                # Should be block number 1 but isn't
@@ -114,16 +121,21 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response = create_socket_tuple(data_string, server_ip, tid)
 
+        # Set sendto expectations
+        sendto_calls = [
+            sendto_call_1
+        ]
+
         # Set server response
-        mock_recvfrom.side_effect = [server_response]
+        mock_recvfrom.side_effect = [
+            server_response
+        ]
 
         ### Test
         client = Client2()
         assert False == client.read(filename, server_ip, server_port)
-
-        ### Check expectations
-        assert 1 == mock_sendto.call_count
-        mock_sendto.assert_called_with( read_string, (server_ip, server_port) )
+        assert sendto_calls == mock_sendto.mock_calls
+        assert 1 == mock_recvfrom.call_count
 
     '''
     Client                  Server
@@ -147,6 +159,7 @@ class TestClient:
         # Client read request
         read_packet = ReadPacket(filename, mode)
         read_string = read_packet.network_string()
+        sendto_call_1 = mock.call( read_string, (server_ip, server_port) )
 
         # Server response
         block_number = 0                # The 'previous block' is not valid for the first packet.
@@ -155,16 +168,21 @@ class TestClient:
         data_string = data_packet.network_string()
         server_response = create_socket_tuple(data_string, server_ip, tid)
 
+        # Set sendto expectations
+        sendto_calls = [
+            sendto_call_1
+        ]
+
         # Set server response
-        mock_recvfrom.side_effect = [server_response]
+        mock_recvfrom.side_effect = [
+            server_response
+        ]
 
         ### Test
         client = Client2()
         assert False == client.read(filename, server_ip, server_port)
-
-        ### Check expectations
-        assert 1 == mock_sendto.call_count
-        mock_sendto.assert_called_with( read_string, (server_ip, server_port) )
+        assert sendto_calls == mock_sendto.mock_calls
+        assert 1 == mock_recvfrom.call_count
 
     '''
     Client                  Server
@@ -185,30 +203,35 @@ class TestClient:
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
-        # Client read request
+        # Send to TFTP Server: read request
         read_packet = ReadPacket(filename, mode)
         read_string = read_packet.network_string()
+        sendto_call_1 = mock.call( read_string, (server_ip, server_port) )
 
-        # Server response
+        # Receive from TFTP Server: packet with wrong opcode
         opcode = AckPacket.OPCODE       # Will set the wrong opcode
         block_number = 1
         data = create_random_data_string(1)
-
         data_packet = DataPacket(block_number, data)
         data_packet.OPCODE = opcode
         data_string = data_packet.network_string()
         server_response = create_socket_tuple(data_string, server_ip, tid)
 
-        # Set server response
-        mock_recvfrom.side_effect = [server_response]
+        # Set sendto expectations
+        sendto_calls = [
+            sendto_call_1
+        ]
+
+        # Set recvfrom responses/side effects
+        mock_recvfrom.side_effect = [
+            server_response
+        ]
 
         ### Test
         client = Client2()
         assert False == client.read(filename, server_ip, server_port)
-
-        ### Check expectations
-        assert 1 == mock_sendto.call_count
-        mock_sendto.assert_called_with( read_string, (server_ip, server_port) )
+        assert sendto_calls == mock_sendto.mock_calls
+        assert 1 == mock_recvfrom.call_count
 
     '''
     Client                  Server
@@ -220,7 +243,9 @@ class TestClient:
 
     Read:               <-- Timeout
     '''
-    def test_one_block_success_smallest_payload(self, mock_socket):
+    @mock.patch('socket.socket.recvfrom')
+    @mock.patch('socket.socket.sendto')
+    def test_one_block_success_smallest_payload(self, mock_sendto, mock_recvfrom):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -229,44 +254,42 @@ class TestClient:
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
-        sendto_args_list = []
-        recvfrom_side_effects = []
-
         # Send to TFTP Server: read request
         read_packet = ReadPacket(filename, mode)
-        read_packet_args = create_socket_tuple_from_packet(read_packet, server_ip, server_port)
-        expect_sendto_call(sendto_args_list, read_packet_args)
+        read_string = read_packet.network_string()
+        sendto_call_1 = mock.call( read_string, (server_ip, server_port) )
 
         # Receive from TFTP Server: data packet
         block_number = 1
         data = create_random_data_string(1)
         data_packet = DataPacket(block_number, data)
         server_response_1 = create_socket_tuple_from_packet(data_packet, server_ip, tid)
-        expect_recvfrom_call(recvfrom_side_effects, server_response_1)
 
         # Send to TFTP Server: ack
         ack_packet = AckPacket(block_number)
-        ack_packet_args = create_socket_tuple_from_packet(ack_packet, server_ip, tid)
-        expect_sendto_call(sendto_args_list, ack_packet_args)
+        ack_string = ack_packet.network_string()
+        sendto_call_2 = mock.call( ack_string, (server_ip, tid) )
 
         # Receive from server: timeout/server does not retransmit last packet
         server_response_2 = socket.timeout
-        expect_recvfrom_call(recvfrom_side_effects, server_response_2)
 
-        # Set server response/side effects
-        mock_socket.recvfrom.side_effect = recvfrom_side_effects
+        # Set sendto expectations
+        sendto_calls = [
+            sendto_call_1,
+            sendto_call_2
+        ]
+
+        # Set recvfrom responses/side effects
+        mock_recvfrom.side_effect = [
+            server_response_1,
+            server_response_2
+        ]
 
         ### Test
-        client = Client(mock_socket)
+        client = Client2()
         assert True == client.read(filename, server_ip, server_port)
-
-        ### Check expectations
-        # sendto
-        assert 2 == mock_socket.sendto.call_count
-        assert sendto_args_list == mock_socket.sendto.call_args_list
-
-        # recvfrom
-        assert 2 == mock_socket.recvfrom.call_count
+        assert sendto_calls == mock_sendto.mock_calls
+        assert 2 == mock_recvfrom.call_count
 
     '''
     Client                  Server
@@ -278,7 +301,9 @@ class TestClient:
 
     Read:               <-- Timeout
     '''
-    def test_one_block_success_largest_payload(self, mock_socket):
+    @mock.patch('socket.socket.recvfrom')
+    @mock.patch('socket.socket.sendto')
+    def test_one_block_success_largest_payload(self, mock_sendto, mock_recvfrom):
         ### Setup
         server_ip = '127.0.0.1'
         server_port = 69
@@ -287,44 +312,42 @@ class TestClient:
         tid = 12345                     # transmission id (port) is random?
 
         ### Set expectations
-        sendto_args_list = []
-        recvfrom_side_effects = []
-
         # Send to server: read request
         read_packet = ReadPacket(filename, mode)
-        read_packet_args = create_socket_tuple_from_packet(read_packet, server_ip, server_port)
-        expect_sendto_call(sendto_args_list, read_packet_args)
+        read_string = read_packet.network_string()
+        sendto_call_1 = mock.call( read_string, (server_ip, server_port) )
 
         # Receive from server: data packet
         block_number = 1
         data = create_random_data_string(MAX_DATA_SIZE-1)
         data_packet = DataPacket(block_number, data)
         server_response_1 = create_socket_tuple_from_packet(data_packet, server_ip, tid)
-        expect_recvfrom_call(recvfrom_side_effects, server_response_1)
 
         # Send to server: ack
         ack_packet = AckPacket(block_number)
-        ack_packet_args = create_socket_tuple_from_packet(ack_packet, server_ip, tid)
-        expect_sendto_call(sendto_args_list, ack_packet_args)
+        ack_string = ack_packet.network_string()
+        sendto_call_2 = mock.call( ack_string, (server_ip, tid) )
 
         # Receive from server: timeout/server does not retransmit last packet
         server_response_2 = socket.timeout
-        expect_recvfrom_call(recvfrom_side_effects, server_response_2)
+
+        # Set sendto expectations
+        sendto_calls = [
+            sendto_call_1,
+            sendto_call_2
+        ]
 
         # Set server response/side effects
-        mock_socket.recvfrom.side_effect = recvfrom_side_effects
+        mock_recvfrom.side_effect = [
+            server_response_1,
+            server_response_2
+        ]
 
         ### Test
-        client = Client(mock_socket)
+        client = Client2()
         assert True == client.read(filename, server_ip, server_port)
-
-        ### Check expectations
-        # sendto
-        assert 2 == mock_socket.sendto.call_count
-        assert sendto_args_list == mock_socket.sendto.call_args_list
-
-        # recvfrom
-        assert 2 == mock_socket.recvfrom.call_count
+        assert sendto_calls == mock_sendto.mock_calls
+        assert 2 == mock_recvfrom.call_count
 
     '''
     Client                  Server
