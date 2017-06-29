@@ -352,13 +352,13 @@ class TestClient:
     '''
     Client                  Server
     ______________________________
-    Write: Read request --> Received
+    Send: Read request  --> Received
 
-    Read:               <-- Data block 1 (< 512 bytes of data)
-    Write: Ack block 1  --> Not received
+    Recv:               <-- Data block 1 (< 512 bytes of data)
+    Send: Ack block 1   --> Not received
 
-    Read:               <-- Data block 1 (< 512 bytes of data)
-    Write: Ack block 1  --> Does not matter
+    Recv:               <-- Data block 1 (< 512 bytes of data)
+    Send: Ack block 1   --> Does not matter
     '''
     @mock.patch('socket.socket.recvfrom')
     @mock.patch('socket.socket.sendto')
@@ -374,35 +374,35 @@ class TestClient:
         # Client read request
         read_packet = ReadPacket(filename, mode)
         read_string = read_packet.network_string()
-        sendto_read_request = mock.call( read_string, (server_ip, server_port) )
+        read_request = mock.call( read_string, (server_ip, server_port) )
 
         # Server response - data packet
         block_number = 1
         data = create_random_data_string(1)
         data_packet = DataPacket(block_number, data)
         data_string = data_packet.network_string()
-        recvfrom_data_packet = create_socket_tuple(data_string, server_ip, tid)
+        data_packet = create_socket_tuple(data_string, server_ip, tid)
 
         # Client ack response
         ack_packet = AckPacket(block_number)
         ack_string = ack_packet.network_string()
-        sendto_ack_response = mock.call( ack_string, (server_ip, tid) )
+        client_ack = mock.call( ack_string, (server_ip, tid) )
 
         # Server does not retransmit last packet
-        recvfrom_timeout = socket.timeout
+        server_timeout = socket.timeout
 
         # Set sendto expectations
         sendto_calls = [
-            sendto_read_request,
-            sendto_ack_response,
-            sendto_ack_response,
+            read_request,
+            client_ack,
+            client_ack,
         ]
 
         # Set recvfrom responses/side effects
         mock_recvfrom.side_effect = [
-            recvfrom_data_packet,
-            recvfrom_data_packet,
-            recvfrom_timeout        # This would be returned but the Client will not wait and read again
+            data_packet,
+            data_packet,
+            server_timeout          # This would be returned but the Client will not wait and read again
         ]
 
         ### Test
