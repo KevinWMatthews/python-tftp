@@ -222,6 +222,50 @@ class TestClient:
     ______________________________
     Write: Read request --> Received
 
+    Read:               <-- Data block 1 (== 513 bytes of data)
+    Abort
+    '''
+    @mock.patch('socket.socket.recvfrom')
+    @mock.patch('socket.socket.sendto')
+    def test_one_block_fails_if_payload_is_too_large(self, mock_sendto, mock_recvfrom):
+        ### Setup
+        server_ip = '127.0.0.1'
+        server_port = 69
+        filename = 'test.txt'
+        mode = 'octet'
+        tid = 12345                     # transmission id (port) is random?
+
+        ### Set expectations
+        # Client read request
+        read_packet = ReadPacket(filename, mode)
+        read_request = create_mock_call(read_packet, server_ip, server_port)
+
+        # Server response - data packet
+        block_number = 1
+        data = create_random_data_string(MAX_DATA_SIZE+1)
+        data_packet = DataPacket(block_number, data)
+        data_block_1 = create_socket_tuple(data_packet, server_ip, tid)
+
+        # Set sendto expectations
+        sendto_calls = [
+            read_request,
+        ]
+
+        # Set server response
+        mock_recvfrom.side_effect = [
+            data_block_1,
+        ]
+
+        ### Test
+        client = Client()
+        assert False == client.read(filename, server_ip, server_port)
+        assert 1 == mock_recvfrom.call_count
+
+    '''
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
     Read:               <-- Data block 1 (1 byte of data)
     Write: Ack block 1  --> Received
 
@@ -387,50 +431,6 @@ class TestClient:
         assert True == client.read(filename, server_ip, server_port)
         assert sendto_calls == mock_sendto.mock_calls
         assert 2 == mock_recvfrom.call_count
-
-    '''
-    Client                  Server
-    ______________________________
-    Write: Read request --> Received
-
-    Read:               <-- Data block 1 (== 513 bytes of data)
-    Abort
-    '''
-    @mock.patch('socket.socket.recvfrom')
-    @mock.patch('socket.socket.sendto')
-    def test_one_block_fails_if_payload_is_too_large(self, mock_sendto, mock_recvfrom):
-        ### Setup
-        server_ip = '127.0.0.1'
-        server_port = 69
-        filename = 'test.txt'
-        mode = 'octet'
-        tid = 12345                     # transmission id (port) is random?
-
-        ### Set expectations
-        # Client read request
-        read_packet = ReadPacket(filename, mode)
-        read_request = create_mock_call(read_packet, server_ip, server_port)
-
-        # Server response - data packet
-        block_number = 1
-        data = create_random_data_string(MAX_DATA_SIZE+1)
-        data_packet = DataPacket(block_number, data)
-        data_block_1 = create_socket_tuple(data_packet, server_ip, tid)
-
-        # Set sendto expectations
-        sendto_calls = [
-            read_request,
-        ]
-
-        # Set server response
-        mock_recvfrom.side_effect = [
-            data_block_1,
-        ]
-
-        ### Test
-        client = Client()
-        assert False == client.read(filename, server_ip, server_port)
-        assert 1 == mock_recvfrom.call_count
 
     '''
     Client                  Server

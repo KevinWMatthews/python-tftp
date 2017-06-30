@@ -17,59 +17,181 @@ TFTP protocol for reading N blocks:
                 <--     Data N (< 512 K)
     Ack block N -->
 
-Test list:
-    Read request failure.
-        --> Failure
 
-    Server response failure, block 1.
-        --> Read
-        <-- Failure:
-                no response (timeout)
-                wrong block number
-                wrong opcode
 
-    Ack failure, block 1.
-        --> Read
-        <-- Data block 1
-        --> Failure: ack block 1
-                packet not received
-        <-- Data block 1
+            ~~~ Test list ~~~
+Client read request failure
+    Client                  Server
+    ______________________________
+    Failure: ?          -->
 
-    Valid transmission, 1 block:
-        --> Read
-        <-- Data block 1
-        --> Ack block 1
 
-    Valid transmission after ack failure, block 1.
-        --> Read
-        <-- Data block 1
-        --> Failure: ack block 1
-                packet not received
-        <-- Data block 1
-        --> Ack block 1
+Server timeout failure, block 1
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
 
-    Server response failure, block n.
-        --> Read
-        <-- Data block 1
-        --> Ack block 1
-        <-- Failure
-                no response (timeout)
-                wrong block number
-                wrong opcode
-        Does the client send an ack? I think not.
-        Does the server retry?
+    Read:               <-- Timeout
+    Abort
 
-    Two ack failures, block n.
-        --> Read
-        <-- Data block 1
-        --> Ack block 1
-        <-- Data block n
-        --> Failure: ack block n
-                packet not received
-        <-- Data block n
-        --> Failure: ack block n
-                packet not received
 
+Server response failure, block 1
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data packet
+    Abort
+                            wrong block number
+                            wrong opcode
+                            block too large
+                            block is 0 bytes
+
+
+Success, block 1
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (1-511 bytes of data)
+    Write: Ack block 1  --> Received
+
+    Read:               <-- Timeout
+    Success
+
+
+Success after ack failure, block 1
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (1-511 bytes of data)
+    Write: Ack block 1  --> Not received
+
+    Read:               <-- Data block 1 (1-511 bytes of data)
+    Write: Ack block 1  --> Does not matter
+    Success
+
+
+Success? with two ack failures, block 1
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (1-511 bytes of data)
+    Write: Ack block 1  --> Not received
+
+    Read:               <-- Data block 1 (1-511 bytes of data)
+    Write: Ack block 1  --> Does not matter
+    Success
+
+
+
+
+            ~~~ Second block ~~~
+
+
+Server timeout failure, block 2
+    Client                  Server
+    ______________________________
+    Write: Read Request --> Received
+
+    Read:               <-- Data block 1 (== 512 bytes of data)
+    Write: Ack block 1  -->
+
+    Read:               <-- Failure: socket timeout
+    Write: Ack block 1  -->
+
+    Read:               <-- Failure: socket timeout
+    Abort
+
+
+Server response failure, block 2
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (== 512 bytes of data)
+    Write: Ack block 1  --> Received
+
+    Read:               <-- Data packet, invalid
+    Abort
+                            wrong block number
+                            wrong opcode
+                            block too large
+
+
+Success, empty payload ends transmission, block 2
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (512 bytes of data)
+    Write: Ack block 1  --> Received
+
+    Read:               <-- Data block 2 (1-511 byte of data)
+    Ack block 2         --> Received
+
+    Read:               <-- Timeout
+    Success
+
+
+Success? with two ack failures, block 2
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (== 512 bytes of data)
+    Write: Ack block 1  --> Received
+
+    Read:               <-- Data block 2 (0-511 bytes of data)
+    Write: Ack block 2  --> Not received
+
+    Read:               <-- Data block 2 (0-511 bytes of data)
+    Write: Ack block 2  --> Does not matter
+    Success
+
+
+
+Success, server resends first block, block 2
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (512 bytes of data)
+    Write: Ack block 1  --> Not received
+
+    Read:               <-- Data block 1 (512 byte of data)
+    Write: Ack block 1  --> Received
+
+    Read:               <-- Data block 2 (0-511 byte of data)
+    Write: Ack block 2  --> Received
+
+    Read:               <-- Timeout
+    Success
+
+
+Success, server resends first and second blocks, block 2
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (512 bytes of data)
+    Write: Ack block 1  --> Not received
+
+    Read:               <-- Resend data block 1 (512 byte of data)
+    Write: Ack block 1  --> Received
+
+    Read:               <-- Data block 2 (0-511 byte of data)
+    Write: Ack block 2  --> Not received
+
+    Read:               <-- Data block 2 (0-511 byte of data)
+    Write: Ack block 2  --> Does not matter
+    Success
+
+
+
+            ~~~ N blocks ~~~
     Server response failure, block N.
         --> Read
         <-- Data block 1
@@ -139,6 +261,8 @@ Test list:
         <-- Data block N
         --> Ack block N
 
+
+TODO:
     Different filenames.
         input sanitization
     Different server IP.
@@ -168,8 +292,3 @@ Test list:
     Success on block 1.
     Success on block 2.
     Success on block n.
-
-TODO
-    Do we want to convert read()'s ip and port arguments into a tuple? I think so.
-    If input sanitation fails, do we send a response to the server?
-    What if we want to transmit two complete blocks? 512K and 512K. What is the stop condition? An empty third block?
