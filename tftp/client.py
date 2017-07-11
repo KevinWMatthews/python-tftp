@@ -16,12 +16,8 @@ class Client:
         # The first packet is special only in that we save the TID
         # for the rest of the transmission.
         (packet, tid) = self.__get_server_response(self.buffer_size)
-        if not self.__is_valid_data_packet(packet):
-            print 'Invalid server response! Aborting transfer.'
-            return False
-        if not packet.block_number == 1:
-            print 'Received invalid block number!'
-            print 'Aborting transfer!'
+        if not self.__is_valid_first_packet(packet):
+            print 'Invalid respone to read request! Aborting transfer.'
             return False
 
         # print 'Sending ack response to block number %d' % packet.block_number
@@ -97,6 +93,16 @@ class Client:
             return False
         if not packet.is_payload_valid():
             print 'Packet payload is invalid!'
+            return False
+        return True
+
+    def __is_valid_first_packet(self, packet):
+        if not self.__is_valid_data_packet(packet):
+            print 'Invalid server response!'
+            return False
+        if not packet.block_number == 1:
+            print 'Received invalid block number!'
+            print 'Aborting transfer!'
             return False
         return True
 
