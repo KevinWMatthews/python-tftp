@@ -20,13 +20,13 @@ TFTP protocol for reading N blocks:
 
 
             ~~~ Test list ~~~
-Client read request failure
+Failure, client does not send read request
     Client                  Server
     ______________________________
     Failure: ?          -->
 
 
-Server timeout failure, block 1
+Failure, server timeout, block 1
     Client                  Server
     ______________________________
     Write: Read request --> Received
@@ -35,7 +35,7 @@ Server timeout failure, block 1
     Abort
 
 
-Server response failure, block 1
+Failure, bad server response, block 1
     Client                  Server
     ______________________________
     Write: Read request --> Received
@@ -91,7 +91,7 @@ Success? with two ack failures, block 1
             ~~~ Second block ~~~
 
 
-Server timeout failure, block 2
+Failure, server timeout, block 2
     Client                  Server
     ______________________________
     Write: Read Request --> Received
@@ -106,7 +106,7 @@ Server timeout failure, block 2
     Abort
 
 
-Server response failure, block 2
+Failure, bad server response, block 2
     Client                  Server
     ______________________________
     Write: Read request --> Received
@@ -121,7 +121,14 @@ Server response failure, block 2
                             block too large
 
 
-Success, empty payload ends transmission, block 2
+Failure, server resends wrong block, block 2
+    Client                  Server
+    ______________________________
+    TODO
+
+
+
+Success, undersize payload ends transmission, block 2
     Client                  Server
     ______________________________
     Write: Read request --> Received
@@ -150,7 +157,6 @@ Success? with two ack failures, block 2
     Read:               <-- Data block 2 (0-511 bytes of data)
     Write: Ack block 2  --> Does not matter
     Success
-
 
 
 Success, server resends first block, block 2
@@ -192,74 +198,142 @@ Success, server resends first and second blocks, block 2
 
 
             ~~~ N blocks ~~~
-    Server response failure, block N.
-        --> Read
-        <-- Data block 1
-        --> Ack block 1
-        <-- Data block n
-        --> Ack block n
-        <-- Failure
-                no response (timeout)
-                wrong block number
-                wrong opcode
+Failure, server timeout, block N
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
 
-    Ack failure, block N.
-        --> Read
-        <-- Data block 1
-        --> Ack block 1
-        <-- Data block n
-        --> Ack block n
-        <-- Data block N
-        --> Failure
-                ?
+    Read:               <-- Data block 1 (== 512 bytes of data)
+    Write: Ack block 1  --> Received
 
-    Valid transmission, N blocks.
-        --> Read
-        <-- Data block 1
-        --> Ack block 1
-        <-- Data block n
-        --> Ack block n
-        <-- Data block N
-        --> Ack block N
+    ...
 
-    Valid transmission with ack failure, N blocks.
-        --> Read
-        <-- Data block 1
-        --> Ack block 1
-        <-- Data block n
-        --> Failure: ack block n
-                packet not received
-        <-- Data block n
-        --> Ack block n
-        <-- Data block N
-        --> Ack block N
+    Read:               <-- Data block n (== 512 bytes of data)
+    Write: Ack block n  --> Received
 
-    Ack failure on final block, N blocks.
-        --> Read
-        <-- Data block 1
-        --> Ack block 1
-        <-- Data block n
-        <-- Data block n
-        --> Ack block n
-        <-- Data block N
-        --> Failure: ack block N
-                packet not received
-        <-- Data block N
-        --> Failure: ack block N
-                packet not received
+    ...
 
-    Valid transmission with ack failure on final block, N blocks.
-        --> Read
-        <-- Data block 1
-        --> Ack block 1
-        <-- Data block n
-        <-- Data block n
-        --> Ack block n
-        <-- Data block N
-        --> Failure: ack block N
-                packet not received
-        <-- Data block N
-        --> Ack block N
+    Read:               <-- Failure: socket timeout
+    Write: Ack block n  -->
+
+    Read:               <-- Failure: socket timeout
+    Abort
+
+
+Failure, bad server response, block N
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (== 512 bytes of data)
+    Write: Ack block 1  --> Received
+
+    ...
+
+    Read:               <-- Data block n (== 512 bytes of data)
+    Write: Ack block n  --> Received
+
+    ...
+
+    Read:               <-- Data packet, invalid
+    Abort
+                            wrong block number
+                            wrong opcode
+                            block too large
+
+Success, undersize payload ends transmission, block N
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (512 bytes of data)
+    Write: Ack block 1  --> Received
+
+    ...
+
+    Read:               <-- Data block n (== 512 bytes of data)
+    Write: Ack block n  --> Received
+
+    ...
+
+    Read:               <-- Data block N (0-511 byte of data)
+    Ack block N         --> Received
+
+    Read:               <-- Timeout
+    Success
+
+
+Success? with two ack failures on last block, block N
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (== 512 bytes of data)
+    Write: Ack block 1  --> Received
+
+    ...
+
+    Read:               <-- Data block n (== 512 bytes of data)
+    Write: Ack block n  --> Received
+
+    ...
+
+    Read:               <-- Data block N (0-511 bytes of data)
+    Write: Ack block N  --> Not received
+
+    Read:               <-- Data block N (0-511 bytes of data)
+    Write: Ack block N  --> Does not matter
+    Success
+
+
+Success, server resends nth block, block N
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (== 512 bytes of data)
+    Write: Ack block 1  --> Received
+
+    ...
+
+    Read:               <-- Data block n (512 byte of data)
+    Write: Ack block n  --> Not received
+
+    Read:               <-- Data block n (512 byte of data)
+    Write: Ack block n  --> Received
+
+    ...
+
+    Read:               <-- Data block N (0-511 bytes of data)
+    Write: Ack block N  --> Received
+
+    Read:               <-- Timeout
+    Success
+
+
+Success, server resends Nth block, block N
+    Client                  Server
+    ______________________________
+    Write: Read request --> Received
+
+    Read:               <-- Data block 1 (== 512 bytes of data)
+    Write: Ack block 1  --> Received
+
+    ...
+
+    Read:               <-- Data block n (512 byte of data)
+    Write: Ack block n  --> Received
+
+    ...
+
+    Read:               <-- Data block N (0-511 bytes of data)
+    Write: Ack block N  --> Not received
+
+    Read:               <-- Data block N (0-511 bytes of data)
+    Write: Ack block N  --> Does not matter
+    Success
+
+
 
 
 TODO:
@@ -288,7 +362,3 @@ TODO:
         octed
         mail
         netascii
-
-    Success on block 1.
-    Success on block 2.
-    Success on block n.
